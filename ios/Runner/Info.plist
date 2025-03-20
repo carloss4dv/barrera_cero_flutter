@@ -1,0 +1,6 @@
+<dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para mostrarte puntos de interés cercanos.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Esta aplicación necesita acceso a tu ubicación para mostrarte puntos de interés cercanos.</string>
+</dict> 
