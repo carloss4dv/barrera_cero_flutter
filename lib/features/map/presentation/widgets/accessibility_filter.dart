@@ -25,79 +25,113 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.search, size: 20),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar',
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(vertical: 12),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              border: Border(
-                left: BorderSide(
-                  color: Colors.grey.withOpacity(0.3),
-                  width: 1,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.search, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Buscar',
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
-            ),
-            child: DropdownButton<int>(
-              value: _selectedLevel,
-              underline: const SizedBox(),
-              icon: const Icon(Icons.keyboard_arrow_down),
-              items: const [
-                DropdownMenuItem(
-                  value: 0,
-                  child: Text('Nivel de accesibilidad'),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(
+                      color: Colors.grey.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
                 ),
-                DropdownMenuItem(
-                  value: 1,
-                  child: Text('Alta accesibilidad'),
+                child: TextButton(
+                  onPressed: () {
+                    // TODO: Implement login functionality
+                  },
+                  child: const Text(
+                    'Iniciar sesión',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                DropdownMenuItem(
-                  value: 2,
-                  child: Text('Media accesibilidad'),
-                ),
-                DropdownMenuItem(
-                  value: 3,
-                  child: Text('Baja accesibilidad'),
-                ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedLevel = value;
-                  });
-                  widget.onFilterChanged(value);
-                }
-              },
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        Container(
+          margin: const EdgeInsets.only(left: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButton<int>(
+            value: _selectedLevel,
+            underline: const SizedBox(),
+            isDense: true,
+            icon: const Icon(Icons.keyboard_arrow_down),
+            items: const [
+              DropdownMenuItem(
+                value: 0,
+                child: Text('Nivel de accesibilidad'),
+              ),
+              DropdownMenuItem(
+                value: 1,
+                child: Text('Alta accesibilidad'),
+              ),
+              DropdownMenuItem(
+                value: 2,
+                child: Text('Media accesibilidad'),
+              ),
+              DropdownMenuItem(
+                value: 3,
+                child: Text('Baja accesibilidad'),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _selectedLevel = value;
+                });
+                widget.onFilterChanged(value);
+              }
+            },
+          ),
+        ),
+      ],
     );
   }
 } 
