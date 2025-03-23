@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 
 import '../../application/marker_cubit.dart';
 import '../../application/marker_state.dart';
@@ -9,6 +10,9 @@ import '../../domain/marker_model.dart';
 import '../widgets/accessibility_filter.dart';
 import '../widgets/custom_map_marker.dart';
 import '../widgets/marker_detail_card.dart';
+import '../../../accessibility/presentation/pages/accessibility_settings_page.dart';
+import '../../../accessibility/presentation/providers/accessibility_provider.dart';
+import '../../../../main.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -27,6 +31,9 @@ class MapView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isHighContrastMode = accessibilityProvider.highContrastMode;
+    
     return Scaffold(
       body: BlocBuilder<MarkerCubit, MarkerState>(
         builder: (context, state) {
@@ -46,10 +53,24 @@ class MapView extends StatelessWidget {
                   },
                 ),
                 children: [
-                  // Capa de mapa base
+                  // Capa de mapa base - Usar un estilo de alto contraste si está activado
                   TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    urlTemplate: isHighContrastMode ? kHighContrastMapUrl : kDefaultMapUrl,
                     userAgentPackageName: 'com.example.app',
+                    // Ajustar el brillo para alto contraste
+                    tileBuilder: isHighContrastMode
+                        ? (context, widget, tile) {
+                            return ColorFiltered(
+                              colorFilter: const ColorFilter.matrix(<double>[
+                                1.2, 0, 0, 0, 0, // Aumentar brillo rojo
+                                0, 1.2, 0, 0, 0, // Aumentar brillo verde
+                                0, 0, 1.2, 0, 0, // Aumentar brillo azul
+                                0, 0, 0, 1, 0,
+                              ]),
+                              child: widget,
+                            );
+                          }
+                        : null,
                   ),
                   
                   // Capa de marcadores
@@ -103,10 +124,12 @@ class MapView extends StatelessWidget {
                     FloatingActionButton(
                       heroTag: 'current_location',
                       mini: true,
-                      backgroundColor: Colors.white,
-                      child: const Icon(
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kButtonColor 
+                          : Colors.white,
+                      child: Icon(
                         Icons.my_location,
-                        color: Colors.black87,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
                       ),
                       onPressed: () {
                         context.read<MarkerCubit>().getCurrentLocation();
@@ -118,13 +141,38 @@ class MapView extends StatelessWidget {
                     FloatingActionButton(
                       heroTag: 'reset_view',
                       mini: true,
-                      backgroundColor: Colors.white,
-                      child: const Icon(
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kButtonColor 
+                          : Colors.white,
+                      child: Icon(
                         Icons.replay,
-                        color: Colors.black87,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
                       ),
                       onPressed: () {
                         // Implementar reset de vista
+                      },
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Botón de accesibilidad
+                    FloatingActionButton(
+                      heroTag: 'accessibility',
+                      mini: true,
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kAccentColor 
+                          : Colors.white,
+                      child: Icon(
+                        Icons.accessibility_new,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AccessibilitySettingsPage(),
+                          ),
+                        );
                       },
                     ),
                   ],
@@ -139,14 +187,17 @@ class MapView extends StatelessWidget {
 
   List<Marker> _buildMarkers(BuildContext context, MarkerState state) {
     final List<Marker> markers = [];
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isHighContrastMode = accessibilityProvider.highContrastMode;
     
     // Añadir marcadores cercanos
     for (final model in state.nearbyMarkers) {
       markers.add(
         Marker(
           point: model.position,
-          width: model.width,
-          height: model.height,
+          // Dar más espacio si estamos en modo de alto contraste
+          width: isHighContrastMode ? model.width * 1.5 : model.width,
+          height: isHighContrastMode ? model.height * 2.0 : model.height,
           child: CustomMapMarker(
             marker: model,
             isSelected: state.hasSelectedMarker && 
@@ -165,8 +216,9 @@ class MapView extends StatelessWidget {
       markers.add(
         Marker(
           point: currentLocation.position,
-          width: currentLocation.width,
-          height: currentLocation.height,
+          // Dar más espacio si estamos en modo de alto contraste
+          width: isHighContrastMode ? currentLocation.width * 1.5 : currentLocation.width,
+          height: isHighContrastMode ? currentLocation.height * 2.0 : currentLocation.height,
           child: CustomMapMarker(
             marker: currentLocation,
             onTap: () {

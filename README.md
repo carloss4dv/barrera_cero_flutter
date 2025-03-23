@@ -8,6 +8,7 @@ Aplicación móvil para mapear y compartir información sobre accesibilidad en e
 - Sistema de reportes colaborativos sobre la accesibilidad de lugares
 - Clasificación de ubicaciones según su nivel de accesibilidad (bueno, medio, malo)
 - Detalles y comentarios específicos sobre las barreras o facilidades de cada lugar
+- Funciones de accesibilidad: modo de alto contraste, texto ampliable e instrucciones para lectores de pantalla
 
 ## Requisitos de Instalación
 
@@ -35,10 +36,33 @@ Aplicación móvil para mapear y compartir información sobre accesibilidad en e
 
 ## Documentación
 
-Para más información sobre el desarrollo del proyecto:
+Para más información sobre el desarrollo del proyecto, consulta nuestra [documentación completa](docs/indice.md), que incluye:
 
-- [Documentación del Sprint 1](docs/sprint1.md) - Funcionalidades iniciales implementadas
-- [Guía de Pruebas](docs/guia_pruebas.md) - Instrucciones detalladas para probar la aplicación
+- **Documentación de Desarrollo**
+  - [Sprint 1: Funcionalidades Básicas](docs/sprints/sprint1-funcionalidades_basicas.md)
+  - [Sprint 3: Accesibilidad](docs/sprints/sprint3-accesibilidad.md)
+
+- **Guías de Pruebas**
+  - [Guía de Pruebas Funcionales](docs/guias/guia_pruebas_funcionales.md)
+  - [Guía de Pruebas de Accesibilidad](docs/guias/guia_pruebas_accesibilidad.md)
+
+## Funcionalidades de Accesibilidad
+
+Barrera Cero ha sido desarrollada con un enfoque en la accesibilidad, incluyendo:
+
+- **Modo de Alto Contraste**: Mejora la visibilidad para personas con discapacidad visual mediante un esquema de colores optimizado.
+- **Texto Ampliable**: Permite ajustar el tamaño del texto en toda la aplicación según las necesidades del usuario.
+- **Instrucciones por Voz**: Compatibilidad mejorada con TalkBack (Android) y VoiceOver (iOS) para usuarios con discapacidad visual.
+
+Estas funcionalidades permiten que la aplicación sea usable por un mayor número de personas, independientemente de sus capacidades visuales.
+
+### Capturas de Pantalla
+
+<div align="center">
+  <img src="docs/imagenes/configuracion_accesibilidad.jpg" alt="Configuración de Accesibilidad" width="250"/>
+  <img src="docs/imagenes/mapa_alto_contraste.jpg" alt="Mapa con Alto Contraste" width="250"/>
+  <img src="docs/imagenes/marcadores_accesibles.jpg" alt="Marcadores Accesibles" width="250"/>
+</div>
 
 ## Contribución
 

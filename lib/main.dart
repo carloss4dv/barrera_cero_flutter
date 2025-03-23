@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:provider/provider.dart';
 import 'features/accessibility/infrastructure/providers/accessibility_providers.dart';
 import 'features/map/infrastructure/di/map_dependencies.dart';
 import 'features/map/presentation/pages/map_page.dart';
+import 'features/accessibility/presentation/providers/accessibility_provider.dart';
+import 'features/accessibility/presentation/widgets/accessibility_wrapper.dart';
+
+// Constantes para URLs de mapas en diferentes estilos
+const String kDefaultMapUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const String kHighContrastMapUrl = 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
 
 final getIt = GetIt.instance;
 
@@ -19,34 +26,34 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mapa de Accesibilidad',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        // ... tus providers existentes ...
+        
+        // Añadir el provider de accesibilidad
+        ChangeNotifierProvider(create: (_) => AccessibilityProvider()),
+      ],
+      child: Consumer<AccessibilityProvider>(
+        builder: (context, accessibilityProvider, _) {
+          return MaterialApp(
+            title: 'Barrera Cero',
+            // Usar el tema basado en la configuración de alto contraste
+            theme: accessibilityProvider.getTheme(ThemeData(
+              // ... tu configuración de tema actual ...
+              primarySwatch: Colors.blue,
+              // ... otros ajustes de tema ...
+            )),
+            // Envolver la app con AccessibilityWrapper para aplicar el escalado de texto
+            home: AccessibilityWrapper(
+              child: const MapPage(),
+            ),
+          );
+        },
       ),
-      home: const MapPage(),
     );
   }
 }

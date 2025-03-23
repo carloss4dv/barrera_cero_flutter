@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:provider/provider.dart';
 import '../../../../features/accessibility/domain/accessibility_report_model.dart';
 import '../../../../features/accessibility/presentation/widgets/accessibility_comments_list.dart';
 import '../../../accessibility/domain/i_accessibility_report_service.dart';
+import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 import '../../domain/marker_model.dart';
 
 class MarkerDetailCard extends StatefulWidget {
@@ -88,6 +90,16 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
 
   @override
   Widget build(BuildContext context) {
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isHighContrastMode = accessibilityProvider.highContrastMode;
+    final theme = Theme.of(context);
+    
+    // Colores adaptados para alto contraste
+    final cardColor = isHighContrastMode ? theme.colorScheme.surface : Colors.white;
+    final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
+    final accentColor = isHighContrastMode ? theme.colorScheme.primary : Colors.blue;
+    final dividerColor = isHighContrastMode ? theme.colorScheme.onSurface.withOpacity(0.5) : Colors.grey[300];
+    
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       child: DraggableScrollableSheet(
@@ -98,7 +110,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         builder: (context, scrollController) {
           return Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               boxShadow: [
                 BoxShadow(
@@ -127,7 +139,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                         width: 40,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: dividerColor,
                           borderRadius: BorderRadius.circular(2.5),
                         ),
                       ),
@@ -137,35 +149,36 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                   // Sección superior con icono y nombre
                   ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: _getMarkerColor(),
-                      child: const Icon(
+                      backgroundColor: isHighContrastMode ? accentColor : _getMarkerColor(),
+                      child: Icon(
                         Icons.accessible,
-                        color: Colors.white,
+                        color: isHighContrastMode ? Colors.black : Colors.white,
                         size: 24,
                       ),
                     ),
                     title: Text(
                       widget.marker.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
+                        color: textColor,
                       ),
                     ),
                     subtitle: Text(
                       widget.marker.description.isNotEmpty
                           ? widget.marker.description
                           : 'Centro de accesibilidad',
-                      style: const TextStyle(fontSize: 14),
+                      style: TextStyle(fontSize: 14, color: textColor.withOpacity(0.7)),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.share),
+                          icon: Icon(Icons.share, color: textColor),
                           onPressed: () {},
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close),
+                          icon: Icon(Icons.close, color: textColor),
                           onPressed: widget.onClose,
                         ),
                       ],
@@ -178,15 +191,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.directions),
+                        icon: Icon(Icons.directions),
                         label: const Text('Cómo llegar'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[200],
-                          foregroundColor: Colors.black87,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
                         onPressed: widget.onGetDirections,
                       ),
                     ),
@@ -198,11 +204,11 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Escriba su reporte',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black54,
+                            color: textColor.withOpacity(0.7),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -210,19 +216,22 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildFeedbackButton(
-                              color: Colors.green,
+                              color: isHighContrastMode ? theme.colorScheme.secondary : Colors.green,
                               icon: Icons.sentiment_very_satisfied,
                               level: AccessibilityLevel.good,
+                              highContrastMode: isHighContrastMode,
                             ),
                             _buildFeedbackButton(
-                              color: Colors.amber,
+                              color: isHighContrastMode ? theme.colorScheme.secondary : Colors.amber,
                               icon: Icons.sentiment_neutral,
                               level: AccessibilityLevel.medium,
+                              highContrastMode: isHighContrastMode,
                             ),
                             _buildFeedbackButton(
-                              color: Colors.red,
+                              color: isHighContrastMode ? theme.colorScheme.error : Colors.red,
                               icon: Icons.sentiment_very_dissatisfied,
                               level: AccessibilityLevel.bad,
+                              highContrastMode: isHighContrastMode,
                             ),
                           ],
                         ),
@@ -234,22 +243,22 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                   if (!_isExpanded)
                     GestureDetector(
                       onTap: _toggleExpand,
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'Ver comentarios de accesibilidad',
                               style: TextStyle(
-                                color: Colors.blue,
+                                color: accentColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Icon(
-                              Icons.keyboard_arrow_up,
-                              color: Colors.blue,
+                              Icons.keyboard_arrow_down,
+                              color: accentColor,
                             ),
                           ],
                         ),
@@ -301,25 +310,53 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     );
   }
 
+  Color _getMarkerColor() {
+    switch (widget.marker.type) {
+      case MarkerType.pointOfInterest:
+        return Colors.orange;
+      case MarkerType.destination:
+        return Colors.amber;
+      case MarkerType.currentLocation:
+        return Colors.red;
+      default:
+        return widget.marker.color;
+    }
+  }
+
   Widget _buildFeedbackButton({
     required Color color,
     required IconData icon,
     required AccessibilityLevel level,
+    bool highContrastMode = false,
   }) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: IconButton(
-        icon: Icon(
-          icon,
-          color: Colors.white,
-          size: 32,
+    final iconColor = highContrastMode ? Colors.black : Colors.white;
+    
+    return Semantics(
+      button: true,
+      label: 'Reportar como ${level.toString().split('.').last}',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showReportDialog(level),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  backgroundColor: color,
+                  radius: 20,
+                  child: Icon(icon, color: iconColor),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getLevelText(level),
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
         ),
-        onPressed: () => _showReportDialog(level),
       ),
     );
   }
@@ -400,19 +437,6 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     );
   }
 
-  Color _getMarkerColor() {
-    switch (widget.marker.type) {
-      case MarkerType.pointOfInterest:
-        return Colors.orange;
-      case MarkerType.destination:
-        return Colors.amber;
-      case MarkerType.currentLocation:
-        return Colors.red;
-      default:
-        return Colors.orange;
-    }
-  }
-  
   Color _getLevelColor(AccessibilityLevel level) {
     switch (level) {
       case AccessibilityLevel.good:
@@ -427,11 +451,11 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
   String _getLevelText(AccessibilityLevel level) {
     switch (level) {
       case AccessibilityLevel.good:
-        return 'accesibilidad buena';
+        return 'Buena';
       case AccessibilityLevel.medium:
-        return 'accesibilidad media';
+        return 'Regular';
       case AccessibilityLevel.bad:
-        return 'accesibilidad mala';
+        return 'Mala';
     }
   }
 } 
