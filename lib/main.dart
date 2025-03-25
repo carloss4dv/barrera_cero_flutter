@@ -7,6 +7,9 @@ import 'features/map/presentation/pages/map_page.dart';
 import 'features/accessibility/presentation/providers/accessibility_provider.dart';
 import 'features/accessibility/presentation/widgets/accessibility_wrapper.dart';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
 // Constantes para URLs de mapas en diferentes estilos
 const String kDefaultMapUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const String kHighContrastMapUrl = 'https://cartodb-basemaps-a.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png';
@@ -19,9 +22,12 @@ void setupDependencies() {
   registerAccessibilityProviders(); // Registrar proveedores de accesibilidad
 }
 
-void main() {
+main() async {
   WidgetsFlutterBinding.ensureInitialized();
   setupDependencies();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 

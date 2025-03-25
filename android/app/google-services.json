@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "564429790459",
+    "project_id": "barrera-cero-e162f",
+    "storage_bucket": "barrera-cero-e162f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:564429790459:android:8b63b03a12936e2273245e",
+        "android_client_info": {
+          "package_name": "com.example.barrera_cero"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-6d5U9RCRFKEqVVAJAesVA8loMzzA6b4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
