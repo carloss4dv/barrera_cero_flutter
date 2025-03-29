@@ -6,6 +6,9 @@ import 'features/map/infrastructure/di/map_dependencies.dart';
 import 'features/map/presentation/pages/map_page.dart';
 import 'features/accessibility/presentation/providers/accessibility_provider.dart';
 import 'features/accessibility/presentation/widgets/accessibility_wrapper.dart';
+import 'features/auth/presentation/login_page.dart';
+import 'features/auth/presentation/register_pages.dart';
+import 'features/users/presentation/profile_page.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -47,16 +50,22 @@ class MyApp extends StatelessWidget {
         builder: (context, accessibilityProvider, _) {
           return MaterialApp(
             title: 'Barrera Cero',
-            // Usar el tema basado en la configuración de alto contraste
             theme: accessibilityProvider.getTheme(ThemeData(
-              // ... tu configuración de tema actual ...
               primarySwatch: Colors.blue,
-              // ... otros ajustes de tema ...
             )),
-            // Envolver la app con AccessibilityWrapper para aplicar el escalado de texto
-            home: AccessibilityWrapper(
-              child: const MapPage(),
-            ),
+            initialRoute: '/',
+            routes: {
+              '/': (context) => AccessibilityWrapper(child: const MapPage()),
+              '/login': (context) => const LoginPage(),
+              '/register': (context) => const RegisterPage(),
+              '/profile': (context) {
+                final args = ModalRoute.of(context)?.settings.arguments as String?;
+                if (args == null) {
+                  return const LoginPage(); // Redirigir al login si no hay ID de usuario
+                }
+                return ProfilePage(userId: args);
+              },
+            },
           );
         },
       ),

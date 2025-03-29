@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../pages/login_page.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 
 class AccessibilityFilter extends StatefulWidget {
@@ -108,14 +107,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                 ),
                 child: TextButton(
                   onPressed: () {
-                    Navigator.of(context).push(
-                      PageRouteBuilder(
-                        opaque: false,
-                        pageBuilder: (BuildContext context, _, __) {
-                          return const LoginPage();
-                        },
-                      ),
-                    );
+                    Navigator.of(context).pushNamed('/login');
                   },
                   child: Text(
                     'Iniciar sesión',
