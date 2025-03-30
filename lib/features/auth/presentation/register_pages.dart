@@ -39,10 +39,9 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      // Crear cuenta en Firebase Auth
-      final userCredential = await authService.value.createAccount(
+      final userCredential = await authService.createAccount(
         _emailController.text.trim(),
-        _passwordController.text,
+        _passwordController.text.trim(),
       );
 
       print('Usuario creado: ${userCredential.user?.uid}');
@@ -59,7 +58,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
       await _userService.createUser(newUser);
       Navigator.of(context).pushReplacementNamed('/login');
-        ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Cuenta creada exitosamente')),
       );
 

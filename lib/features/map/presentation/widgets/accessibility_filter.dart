@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
+import '../../../auth/service/auth_service.dart';
 
 class AccessibilityFilter extends StatefulWidget {
   final Function(int) onFilterChanged;
@@ -23,11 +24,25 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
   void initState() {
     super.initState();
     _selectedLevel = widget.selectedLevel;
+    // Listen to auth changes
+    authService.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    // Remove listener when widget is disposed
+    authService.removeListener(() {
+      if (mounted) setState(() {});
+    });
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final currentUser = authService.currentUser; // Use directly from authService
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     final theme = Theme.of(context);
     
@@ -57,6 +72,41 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
       fontWeight: FontWeight.bold,
     );
     
+    Widget _buildUserButton() {
+      if (currentUser != null) {
+        final displayName = currentUser.displayName ?? currentUser.email ?? 'Usuario';
+        return TextButton(
+          onPressed: () {
+            Navigator.of(context).pushNamed('/profile', arguments: currentUser.uid);
+          },
+          child: Row(
+            children: [
+              Icon(
+                Icons.person,
+                color: accentColor,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                displayName,
+                style: buttonStyle,
+              ),
+            ],
+          ),
+        );
+      } else {
+        return TextButton(
+          onPressed: () {
+            Navigator.of(context).pushNamed('/login');
+          },
+          child: Text(
+            'Iniciar sesión',
+            style: buttonStyle,
+          ),
+        );
+      }
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,15 +155,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                     ),
                   ),
                 ),
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/login');
-                  },
-                  child: Text(
-                    'Iniciar sesión',
-                    style: buttonStyle,
-                  ),
-                ),
+                child: _buildUserButton(),
               ),
             ],
           ),

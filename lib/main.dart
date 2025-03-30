@@ -12,6 +12,8 @@ import 'features/users/presentation/profile_page.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'features/auth/service/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Constantes para URLs de mapas en diferentes estilos
 const String kDefaultMapUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -23,14 +25,16 @@ void setupDependencies() {
   // Registrar dependencias por características
   registerMapDependencies(getIt);
   registerAccessibilityProviders(); // Registrar proveedores de accesibilidad
+  getIt.registerSingleton<AuthService>(authService); // Use the global singleton instance directly
 }
 
-main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  setupDependencies();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await authService.initPrefs(); // Use the public method instead
+  setupDependencies();
   runApp(const MyApp());
 }
 

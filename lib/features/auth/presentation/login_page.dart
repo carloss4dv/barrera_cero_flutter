@@ -33,11 +33,13 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final userCredential = await authService.value.signIn(
+      final userCredential = await authService.signIn(
         _emailController.text.trim(),
-        _passwordController.text,
+        _passwordController.text.trim(),
       );
+      
       if (mounted && userCredential.user != null) {
+        // La sesión se mantendrá automáticamente
         Navigator.of(context).pushReplacementNamed(
           '/profile',
           arguments: userCredential.user!.uid,
@@ -56,7 +58,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _handleForgotPassword() async {
+  Future<void> _handleResetPassword() async {
     if (_emailController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Por favor, ingresa tu correo electrónico')),
@@ -65,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     try {
-      await authService.value.sendPasswordResetEmail(_emailController.text.trim());
+      await authService.sendPasswordResetEmail(_emailController.text.trim());
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Se ha enviado un correo para restablecer tu contraseña')),
@@ -191,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
-                                onPressed: _handleForgotPassword,
+                                onPressed: _handleResetPassword,
                                 child: const Text(
                                   '¿Olvidaste tu contraseña?',
                                   style: TextStyle(color: Colors.black),

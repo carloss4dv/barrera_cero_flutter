@@ -1,21 +1,73 @@
 import "package:firebase_auth/firebase_auth.dart";
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Fixed import
+import 'dart:convert';
 
-ValueNotifier<AuthService> authService = ValueNotifier(AuthService());
-
-class AuthService {
+class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  late final SharedPreferences _prefs;
+  static const String _userKey = 'current_user';
+  
+  // Make this a singleton
+  static final AuthService _instance = AuthService._internal();
+  factory AuthService() => _instance;
+  
+  AuthService._internal() {
+    _auth.authStateChanges().listen((User? user) {
+      _saveUserToPrefs(user);
+      notifyListeners();
+    });
+  }
+
+  Future<void> initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    final savedUserJson = _prefs.getString(_userKey);
+    if (savedUserJson != null && _auth.currentUser == null) {
+      await _prefs.remove(_userKey);
+    }
+  }
 
   User? get currentUser => _auth.currentUser;
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  // Método para verificar si hay una sesión activa
+  bool get isLoggedIn => currentUser != null;
+
+  // Método para obtener el ID del usuario actual
+  String? get currentUserId => currentUser?.uid;
+
+  Future<void> _saveUserToPrefs(User? user) async {
+    if (user == null) {
+      await _prefs.remove(_userKey);
+    } else {
+      final userData = {
+        'uid': user.uid,
+        'email': user.email,
+        'displayName': user.displayName,
+      };
+      await _prefs.setString(_userKey, json.encode(userData));
+    }
+  }
+
   Future<UserCredential> signIn(
      String email,
      String password,
   ) async {
-    return await _auth.signInWithEmailAndPassword(
-      email: email, password: password);
+    try {
+      // Configura la persistencia antes de iniciar sesión
+      await _auth.setPersistence(Persistence.LOCAL);
+      
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      await _saveUserToPrefs(credential.user);
+      notifyListeners();
+      return credential;
+    } catch (e) {
+      rethrow;
+    }
   }
 
   Future<UserCredential> createAccount(
@@ -28,6 +80,8 @@ class AuthService {
 
   Future<void> signOut() async {
     await _auth.signOut();
+    await _saveUserToPrefs(null);
+    notifyListeners();
   }
 
   Future<void> sendPasswordResetEmail(
@@ -68,3 +122,6 @@ class AuthService {
     await _auth.currentUser?.updatePassword(newPassword);
   }
 }
+
+// Global instance
+final authService = AuthService();
