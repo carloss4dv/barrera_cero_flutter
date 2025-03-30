@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../domain/models/user.dart';
 import '../services/user_service.dart';
+import '../../auth/service/auth_service.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -13,6 +14,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final UserService _userService = UserService();
+  final AuthService authService = AuthService();
   final _formKey = GlobalKey<FormState>();
   late User? _user;
   bool _isLoading = true;
@@ -89,6 +91,22 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _handleLogout() async {
+    try {
+      await authService.signOut();
+      if (mounted) {
+        // Navegar al mapa después de cerrar sesión en lugar de al login
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al cerrar sesión')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -108,15 +126,19 @@ class _ProfilePageState extends State<ProfilePage> {
         title: const Text('Mi Perfil'),
         actions: [
           IconButton(
-            icon: Icon(_isEditing ? Icons.save : Icons.edit),
-            onPressed: () {
-              if (_isEditing) {
-                _saveChanges();
-              } else {
-                setState(() => _isEditing = true);
-              }
-            },
+            icon: const Icon(Icons.logout),
+            onPressed: _handleLogout,
           ),
+          if (_isEditing)
+            IconButton(
+              icon: const Icon(Icons.save),
+              onPressed: _saveChanges,
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => setState(() => _isEditing = true),
+            ),
         ],
       ),
       body: SingleChildScrollView(

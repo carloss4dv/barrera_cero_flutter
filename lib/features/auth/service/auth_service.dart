@@ -8,7 +8,6 @@ class AuthService extends ChangeNotifier {
   late final SharedPreferences _prefs;
   static const String _userKey = 'current_user';
   
-  // Make this a singleton
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   
@@ -31,8 +30,29 @@ class AuthService extends ChangeNotifier {
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
+  // Método actualizado para cerrar sesión
+  Future<void> signOut() async {
+    try {
+      // Cerrar sesión en Firebase
+      await _auth.signOut();
+      
+      // Limpiar datos de SharedPreferences
+      await _prefs.remove(_userKey);
+      
+      // Notificar a los listeners del cambio de estado
+      notifyListeners();
+      
+    } catch (e) {
+      print('Error durante el cierre de sesión: $e');
+      rethrow;
+    }
+  }
+
   // Método para verificar si hay una sesión activa
-  bool get isLoggedIn => currentUser != null;
+  Future<bool> checkSession() async {
+    final savedUserJson = _prefs.getString(_userKey);
+    return savedUserJson != null && _auth.currentUser != null;
+  }
 
   // Método para obtener el ID del usuario actual
   String? get currentUserId => currentUser?.uid;
@@ -76,12 +96,6 @@ class AuthService extends ChangeNotifier {
   ) async {
     return await _auth.createUserWithEmailAndPassword(
       email: email, password: password);
-  }
-
-  Future<void> signOut() async {
-    await _auth.signOut();
-    await _saveUserToPrefs(null);
-    notifyListeners();
   }
 
   Future<void> sendPasswordResetEmail(

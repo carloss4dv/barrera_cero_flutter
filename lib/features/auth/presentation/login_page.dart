@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
                     left: 8,
                     child: IconButton(
                       icon: const Icon(Icons.close, color: Colors.black, size: 24),
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
                     ),
                   ),
                   // Content
