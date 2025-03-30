@@ -148,72 +148,160 @@ class _ProfilePageState extends State<ProfilePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre'),
-                enabled: _isEditing,
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Este campo es requerido' : null,
+              // Sección de información personal
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Información Personal',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre',
+                          border: OutlineInputBorder(),
+                        ),
+                        enabled: _isEditing,
+                        validator: (value) =>
+                            value?.isEmpty ?? true ? 'Este campo es requerido' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          border: OutlineInputBorder(),
+                        ),
+                        enabled: _isEditing,
+                        validator: (value) =>
+                            value?.isEmpty ?? true ? 'Este campo es requerido' : null,
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
-                enabled: _isEditing,
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Este campo es requerido' : null,
+
+              // Sección de puntos y badges
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.stars, color: Colors.amber),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Puntos de contribución: ${_user!.contributionPoints}',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Insignias',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: _user!.badges.map((badge) {
+                          return Chip(
+                            label: Text(badge.name),
+                            avatar: CircleAvatar(
+                              backgroundImage: NetworkImage(badge.iconUrl),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<MobilityType>(
-                value: _selectedMobilityType,
-                decoration: const InputDecoration(labelText: 'Tipo de Movilidad'),
-                items: MobilityType.values.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Text(type.toString().split('.').last),
-                  );
-                }).toList(),
-                onChanged: _isEditing
-                    ? (value) {
-                        if (value != null) {
-                          setState(() => _selectedMobilityType = value);
-                        }
-                      }
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              const Text('Preferencias de Accesibilidad:'),
-              ...AccessibilityPreference.values.map((preference) {
-                return CheckboxListTile(
-                  title: Text(preference.toString().split('.').last),
-                  value: _selectedPreferences.contains(preference),
-                  onChanged: _isEditing
-                      ? (bool? value) {
-                          setState(() {
-                            if (value ?? false) {
-                              _selectedPreferences.add(preference);
-                            } else {
-                              _selectedPreferences.remove(preference);
-                            }
-                          });
-                        }
-                      : null,
-                );
-              }),
-              const SizedBox(height: 16),
-              Text('Puntos de contribución: ${_user!.contributionPoints}'),
-              const SizedBox(height: 16),
-              const Text('Insignias:'),
-              Wrap(
-                spacing: 8,
-                children: _user!.badges.map((badge) {
-                  return Chip(
-                    label: Text(badge.name),
-                    avatar: CircleAvatar(
-                      backgroundImage: NetworkImage(badge.iconUrl),
-                    ),
-                  );
-                }).toList(),
+
+              // Sección de preferencias de accesibilidad
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Configuración de Accesibilidad',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<MobilityType>(
+                        value: _selectedMobilityType,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo de Movilidad',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: MobilityType.values.map((type) {
+                          return DropdownMenuItem(
+                            value: type,
+                            child: Text(type.toString().split('.').last),
+                          );
+                        }).toList(),
+                        onChanged: _isEditing
+                            ? (value) {
+                                if (value != null) {
+                                  setState(() => _selectedMobilityType = value);
+                                }
+                              }
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Preferencias de Accesibilidad:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      ...AccessibilityPreference.values.map((preference) {
+                        return CheckboxListTile(
+                          title: Text(preference.toString().split('.').last),
+                          value: _selectedPreferences.contains(preference),
+                          onChanged: _isEditing
+                              ? (bool? value) {
+                                  setState(() {
+                                    if (value ?? false) {
+                                      _selectedPreferences.add(preference);
+                                    } else {
+                                      _selectedPreferences.remove(preference);
+                                    }
+                                  });
+                                }
+                              : null,
+                        );
+                      }),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
