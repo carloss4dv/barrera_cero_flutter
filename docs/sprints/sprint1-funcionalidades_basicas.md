@@ -48,7 +48,12 @@ La aplicación sigue una arquitectura limpia, organizada por características:
 
 ## Próximos Pasos
 
-Para el siguiente sprint se planea:
+Para futuros sprints se espera realizar lo siguiente:
+
+1. Diseño del sistema de autenticacion de usuarios
+2. Conexion con la base de datos alojada en Google Firebase
+3. Implementacion del sistema de autenticacion y creacion de usuarios
+4. Mejorar la interfaz de usuario y experiencia de usuario 
 
 1. Implementar la función de añadir nuevos reportes de accesibilidad
 2. Mejorar el sistema de filtrado de marcadores por nivel de accesibilidad
