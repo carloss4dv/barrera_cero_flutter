@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:result_dart/result_dart.dart';
 import '../../domain/marker_model.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
+import '../../../accessibility/domain/accessibility_report_model.dart';
+import '../../../accessibility/domain/i_accessibility_report_service.dart';
+import '../../../accessibility/infrastructure/services/mock_accessibility_report_service.dart';
+import '../../infrastructure/providers/map_filters_provider.dart';
 
 class CustomMapMarker extends StatelessWidget {
   final MarkerModel marker;
   final bool isSelected;
   final VoidCallback onTap;
+  // Add a static instance of the report service to get accessibility levels
+  static final IAccessibilityReportService _reportService = MockAccessibilityReportService();
 
   const CustomMapMarker({
     Key? key,
@@ -18,59 +25,64 @@ class CustomMapMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final mapFiltersProvider = Provider.of<MapFiltersProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     
-    // Usar el color original pero con mayor contraste si está en modo alto contraste
-    final Color originalColor = _getMarkerColor();
-    final Color backgroundColor = isHighContrastMode 
-        ? accessibilityProvider.getEnhancedColor(originalColor)
-        : originalColor;
+    // Verificar si el marcador debe mostrarse según los filtros
+    if (!mapFiltersProvider.shouldShowMarker(marker.metadata.toJson())) {
+      return const SizedBox.shrink();
+    }
+
+    return FutureBuilder<Color>(
+      future: _getMarkerColorAsync(),
+      builder: (context, snapshot) {
+        final Color backgroundColor = isHighContrastMode 
+            ? accessibilityProvider.getEnhancedColor(snapshot.data ?? Colors.grey)
+            : snapshot.data ?? Colors.grey;
+            
+        final Color iconColor = isHighContrastMode
+            ? (backgroundColor.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+            : Colors.white;
+            
+        final Color borderColor = isHighContrastMode 
+            ? Colors.white
+            : marker.borderColor;
         
-    // Determinar el color del icono basado en la luminosidad del fondo
-    final Color iconColor = isHighContrastMode
-        ? (backgroundColor.computeLuminance() > 0.5 ? Colors.black : Colors.white)
-        : Colors.white;
-        
-    // Borde con mayor contraste
-    final Color borderColor = isHighContrastMode 
-        ? Colors.white
-        : marker.borderColor;
-    
-    // Añadir un texto debajo del marcador en modo de alto contraste
-    final Widget markerWidget = isHighContrastMode
-        ? SizedBox(
-            width: isSelected ? marker.width * 1.5 : marker.width * 1.3,
-            height: isSelected ? marker.height * 2.0 : marker.height * 1.8,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildMarkerDot(backgroundColor, borderColor, iconColor),
-                const SizedBox(height: 2),
-                // Añadir texto descriptivo debajo del marcador
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-                  margin: const EdgeInsets.only(top: 1),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: Text(
-                    _getMarkerTypeText(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
+        final Widget markerWidget = isHighContrastMode
+            ? SizedBox(
+                width: isSelected ? marker.width * 1.5 : marker.width * 1.3,
+                height: isSelected ? marker.height * 2.0 : marker.height * 1.8,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildMarkerDot(backgroundColor, borderColor, iconColor),
+                    const SizedBox(height: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                      margin: const EdgeInsets.only(top: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: Text(
+                        _getMarkerTypeText(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-          )
-        : _buildMarkerDot(backgroundColor, borderColor, iconColor);
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: markerWidget,
+              )
+            : _buildMarkerDot(backgroundColor, borderColor, iconColor);
+        
+        return GestureDetector(
+          onTap: onTap,
+          child: markerWidget,
+        );
+      },
     );
   }
   
@@ -123,23 +135,6 @@ class CustomMapMarker extends StatelessWidget {
     }
   }
 
-  Color _getMarkerColor() {
-    if (isSelected) {
-      return Colors.deepOrange;
-    }
-
-    switch (marker.type) {
-      case MarkerType.pointOfInterest:
-        return Colors.orange;
-      case MarkerType.destination:
-        return Colors.amber;
-      case MarkerType.currentLocation:
-        return Colors.red;
-      default:
-        return marker.color;
-    }
-  }
-
   BoxShape _getMarkerShape() {
     switch (marker.type) {
       case MarkerType.currentLocation:
@@ -160,5 +155,28 @@ class CustomMapMarker extends StatelessWidget {
       default:
         return Icons.location_on;
     }
+  }
+
+  Future<Color> _getMarkerColorAsync() async {
+    if (isSelected) {
+      return Colors.deepOrange;
+    }
+
+    if (marker.type == MarkerType.currentLocation) {
+      return Colors.red;
+    }
+
+    final result = await _reportService.getAccessibilityLevelForMarker(marker.id);
+    if (result.isSuccess()) {
+      switch (result.getOrThrow()) {
+        case AccessibilityLevel.good:
+          return Colors.green;
+        case AccessibilityLevel.medium:
+          return Colors.yellow;
+        case AccessibilityLevel.bad:
+          return Colors.red;
+      }
+    }
+    return Colors.grey;
   }
 } 

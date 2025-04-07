@@ -139,7 +139,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                         width: 40,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: dividerColor,
+                          color: _getLevelColor(_getPredominantLevel()),
                           borderRadius: BorderRadius.circular(2.5),
                         ),
                       ),
@@ -149,7 +149,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                   // Sección superior con icono y nombre
                   ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: isHighContrastMode ? accentColor : _getMarkerColor(),
+                      backgroundColor: isHighContrastMode ? accentColor : _getLevelColor(_getPredominantLevel()),
                       child: Icon(
                         Icons.accessible,
                         color: isHighContrastMode ? Colors.black : Colors.white,
@@ -234,6 +234,79 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                               highContrastMode: isHighContrastMode,
                             ),
                           ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Sección de validación comunitaria
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Validación comunitaria',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.verified,
+                                    size: 16,
+                                    color: Colors.green,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Verificado',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        _buildValidationQuestion(
+                          question: '¿Hay rampas de acceso?',
+                          currentVotes: 8,
+                          totalVotes: 10,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildValidationQuestion(
+                          question: '¿Hay baños adaptados?',
+                          currentVotes: 5,
+                          totalVotes: 10,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildValidationQuestion(
+                          question: '¿Hay ascensores accesibles?',
+                          currentVotes: 3,
+                          totalVotes: 10,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildValidationQuestion(
+                          question: '¿Hay señalización táctil?',
+                          currentVotes: 2,
+                          totalVotes: 10,
                         ),
                       ],
                     ),
@@ -457,5 +530,127 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       case AccessibilityLevel.bad:
         return 'Mala';
     }
+  }
+
+  AccessibilityLevel _getPredominantLevel() {
+    if (_reports == null || _reports!.isEmpty) {
+      return AccessibilityLevel.medium;
+    }
+    
+    final countByLevel = <AccessibilityLevel, int>{
+      AccessibilityLevel.good: 0,
+      AccessibilityLevel.medium: 0,
+      AccessibilityLevel.bad: 0,
+    };
+    
+    for (final report in _reports!) {
+      countByLevel[report.level] = (countByLevel[report.level] ?? 0) + 1;
+    }
+    
+    AccessibilityLevel predominantLevel = AccessibilityLevel.medium;
+    int maxCount = 0;
+    
+    countByLevel.forEach((level, count) {
+      if (count > maxCount) {
+        maxCount = count;
+        predominantLevel = level;
+      }
+    });
+    
+    return predominantLevel;
+  }
+
+  Widget _buildVoteButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: color.withOpacity(0.5)),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildValidationQuestion({
+    required String question,
+    required int currentVotes,
+    required int totalVotes,
+  }) {
+    final theme = Theme.of(context);
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isHighContrastMode = accessibilityProvider.highContrastMode;
+    final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          question,
+          style: TextStyle(
+            fontSize: 14,
+            color: textColor.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildVoteButton(
+              icon: Icons.check_circle,
+              label: 'Sí',
+              color: Colors.green,
+              onTap: () {},
+            ),
+            _buildVoteButton(
+              icon: Icons.cancel,
+              label: 'No',
+              color: Colors.red,
+              onTap: () {},
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: currentVotes / totalVotes,
+          backgroundColor: Colors.grey[200],
+          valueColor: AlwaysStoppedAnimation<Color>(
+            (currentVotes / totalVotes) >= 0.7 ? Colors.green : Colors.orange,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          '$currentVotes de $totalVotes votos necesarios para verificación',
+          style: TextStyle(
+            fontSize: 12,
+            color: textColor.withOpacity(0.5),
+          ),
+        ),
+      ],
+    );
   }
 } 

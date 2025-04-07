@@ -12,7 +12,9 @@ import '../widgets/custom_map_marker.dart';
 import '../widgets/marker_detail_card.dart';
 import '../../../accessibility/presentation/pages/accessibility_settings_page.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
+import '../../../challenges/presentation/widgets/challenges_panel.dart';
 import '../../../../main.dart';
+import '../../infrastructure/providers/map_filters_provider.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -33,6 +35,9 @@ class MapView extends StatelessWidget {
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
+    
+    // Add state for challenges panel
+    final ValueNotifier<bool> isChallengesPanelExpanded = ValueNotifier<bool>(false);
     
     return Scaffold(
       body: BlocBuilder<MarkerCubit, MarkerState>(
@@ -85,10 +90,16 @@ class MapView extends StatelessWidget {
                 top: MediaQuery.of(context).padding.top + 10,
                 left: 0,
                 right: 0,
-                child: AccessibilityFilter(
-                  onFilterChanged: (level) {
-                    // Implementar filtrado por nivel
-                  },
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AccessibilityFilter(),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
               
@@ -113,14 +124,14 @@ class MapView extends StatelessWidget {
                   ),
                 ),
                 
-              // Botones de control de mapa
+              // Botones de acción flotantes
               Positioned(
                 right: 16,
-                bottom: state.hasSelectedMarker ? 220 : 16,
+                bottom: 16,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Botón para centrar en ubicación actual
+                    // Botón para ubicación actual
                     FloatingActionButton(
                       heroTag: 'current_location',
                       mini: true,
@@ -175,8 +186,40 @@ class MapView extends StatelessWidget {
                         );
                       },
                     ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Botón de desafíos (nuevo)
+                    FloatingActionButton(
+                      heroTag: 'challenges',
+                      mini: true,
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kAccentColor 
+                          : Colors.white,
+                      child: Icon(
+                        Icons.emoji_events,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                      ),
+                      onPressed: () {
+                        // Toggle challenges panel
+                        isChallengesPanelExpanded.value = !isChallengesPanelExpanded.value;
+                      },
+                    ),
                   ],
                 ),
+              ),
+              
+              // Challenges Panel (new)
+              ValueListenableBuilder<bool>(
+                valueListenable: isChallengesPanelExpanded,
+                builder: (context, isExpanded, _) {
+                  return ChallengesPanel(
+                    isExpanded: isExpanded,
+                    onClose: () {
+                      isChallengesPanelExpanded.value = false;
+                    },
+                  );
+                },
               ),
             ],
           );
