@@ -55,4 +55,10 @@ Los cambios principales se han implementado en:
 - Implementar filtros adicionales según necesidades de los usuarios
 - Mejorar la visualización de los marcadores en diferentes condiciones de luz
 - Añadir más opciones de personalización para la accesibilidad
-- Implementar un sistema de retroalimentación para los filtros 
+- Implementar un sistema de retroalimentación para los filtros
+- Desarrollar un sistema de validación comunitaria que permita:
+  - Que los usuarios verifiquen y actualicen la información de accesibilidad de los lugares
+  - Implementar un sistema de votación para confirmar la precisión de los datos
+  - Permitir a los usuarios reportar discrepancias en la información
+  - Crear un sistema de moderación para mantener la calidad de los datos
+  - Establecer un sistema de reputación para los usuarios que contribuyen con información precisa
