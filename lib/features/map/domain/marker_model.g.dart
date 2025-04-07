@@ -1,17 +1,15 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'marker_dto.dart';
+part of 'marker_model.dart';
 
 // **************************************************************************
 // JsonSerializableGenerator
 // **************************************************************************
 
-_MarkerDto _$MarkerDtoFromJson(Map<String, dynamic> json) => _MarkerDto(
-  id: json['id'] as String? ?? '',
-  position: _latLngFromJson(json['position'] as Map<String, dynamic>),
-  type:
-      $enumDecodeNullable(_$MarkerTypeEnumMap, json['marker_type']) ??
-      MarkerType.pointOfInterest,
+_MarkerModel _$MarkerModelFromJson(Map<String, dynamic> json) => _MarkerModel(
+  id: json['id'] as String,
+  position: LatLng.fromJson(json['position'] as Map<String, dynamic>),
+  type: $enumDecode(_$MarkerTypeEnumMap, json['type']),
   title: json['title'] as String? ?? '',
   description: json['description'] as String? ?? '',
   width: (json['width'] as num?)?.toDouble() ?? 40.0,
@@ -31,11 +29,11 @@ _MarkerDto _$MarkerDtoFromJson(Map<String, dynamic> json) => _MarkerDto(
           : MarkerMetadata.fromJson(json['metadata'] as Map<String, dynamic>),
 );
 
-Map<String, dynamic> _$MarkerDtoToJson(_MarkerDto instance) =>
+Map<String, dynamic> _$MarkerModelToJson(_MarkerModel instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'position': _latLngToJson(instance.position),
-      'marker_type': _$MarkerTypeEnumMap[instance.type]!,
+      'position': instance.position,
+      'type': _$MarkerTypeEnumMap[instance.type]!,
       'title': instance.title,
       'description': instance.description,
       'width': instance.width,

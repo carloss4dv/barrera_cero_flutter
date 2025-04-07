@@ -7,19 +7,30 @@ class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   late final SharedPreferences _prefs;
   static const String _userKey = 'current_user';
+  bool _isInitialized = false;
   
   static final AuthService _instance = AuthService._internal();
   factory AuthService() => _instance;
   
   AuthService._internal() {
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    _prefs = await SharedPreferences.getInstance();
+    _isInitialized = true;
     _auth.authStateChanges().listen((User? user) {
-      _saveUserToPrefs(user);
-      notifyListeners();
+      if (_isInitialized) {
+        _saveUserToPrefs(user);
+        notifyListeners();
+      }
     });
   }
 
   Future<void> initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
+    if (!_isInitialized) {
+      await _initialize();
+    }
     final savedUserJson = _prefs.getString(_userKey);
     if (savedUserJson != null && _auth.currentUser == null) {
       await _prefs.remove(_userKey);

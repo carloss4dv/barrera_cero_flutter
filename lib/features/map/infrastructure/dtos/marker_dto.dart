@@ -2,6 +2,8 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import '../../domain/marker_model.dart';
+import '../../domain/marker_metadata.dart';
+import '../converters/color_converter.dart';
 
 part 'marker_dto.freezed.dart';
 part 'marker_dto.g.dart';
@@ -21,17 +23,12 @@ class MarkerDto with _$MarkerDto {
     @Default('') String description,
     @Default(40.0) double width,
     @Default(40.0) double height,
-    @JsonKey(
-      fromJson: _colorFromJson,
-      toJson: _colorToJson,
-    )
+    @ColorConverter()
     @Default(Colors.red) Color color,
     @Default(2.0) double borderWidth,
-    @JsonKey(
-      fromJson: _colorFromJson,
-      toJson: _colorToJson,
-    )
+    @ColorConverter()
     @Default(Colors.white) Color borderColor,
+    @Default(MarkerMetadata()) MarkerMetadata metadata,
   }) = _MarkerDto;
 
   factory MarkerDto.fromJson(Map<String, dynamic> json) =>
@@ -48,6 +45,7 @@ class MarkerDto with _$MarkerDto {
         color: model.color,
         borderWidth: model.borderWidth,
         borderColor: model.borderColor,
+        metadata: model.metadata,
       );
 }
 
@@ -63,6 +61,7 @@ extension MarkerDtoX on MarkerDto {
         color: color,
         borderWidth: borderWidth,
         borderColor: borderColor,
+        metadata: metadata,
       );
 }
 

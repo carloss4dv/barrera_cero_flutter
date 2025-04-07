@@ -9,6 +9,7 @@ import 'features/accessibility/presentation/widgets/accessibility_wrapper.dart';
 import 'features/auth/presentation/login_page.dart';
 import 'features/auth/presentation/register_pages.dart';
 import 'features/users/presentation/profile_page.dart';
+import 'features/map/infrastructure/providers/map_filters_provider.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -49,6 +50,9 @@ class MyApp extends StatelessWidget {
         
         // Añadir el provider de accesibilidad
         ChangeNotifierProvider(create: (_) => AccessibilityProvider()),
+        
+        // Añadir el provider de filtros del mapa
+        ChangeNotifierProvider(create: (_) => MapFiltersProvider()),
       ],
       child: Consumer<AccessibilityProvider>(
         builder: (context, accessibilityProvider, _) {

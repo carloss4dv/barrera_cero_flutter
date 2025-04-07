@@ -106,8 +106,10 @@ class MarkerCubit extends Cubit<MarkerState> {
     final result = await _markerService.getMarkerById(id);
 
     if (result.isSuccess) {
+      // Limpiar los marcadores cercanos y mantener solo el seleccionado
       emit(state.copyWith(
         selectedMarkerState: DataState.success(result.success),
+        nearbyMarkersState: DataState.success([result.success]),
       ));
     } else {
       String errorMessage;
@@ -146,6 +148,14 @@ class MarkerCubit extends Cubit<MarkerState> {
     emit(state.copyWith(
       selectedMarkerState: const DataState.idle(),
     ));
+    
+    // Si tenemos ubicación actual, volvemos a cargar los marcadores cercanos
+    if (state.hasCurrentLocation) {
+      getNearbyMarkers(
+        latitude: state.currentLocation!.position.latitude,
+        longitude: state.currentLocation!.position.longitude,
+      );
+    }
   }
 
   /// Reintenta obtener la ubicación actual después de un error
