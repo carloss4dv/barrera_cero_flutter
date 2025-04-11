@@ -142,8 +142,15 @@ class MapView extends StatelessWidget {
                         Icons.my_location,
                         color: isHighContrastMode ? Colors.black : Colors.black87,
                       ),
-                      onPressed: () {
-                        context.read<MarkerCubit>().getCurrentLocation();
+                      onPressed: () async {
+                        await context.read<MarkerCubit>().getCurrentLocation();
+                        // Si tenemos ubicación actual, actualizamos los marcadores cercanos
+                        if (state.hasCurrentLocation) {
+                          await context.read<MarkerCubit>().getNearbyMarkers(
+                            latitude: state.currentLocation!.position.latitude,
+                            longitude: state.currentLocation!.position.longitude,
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: 8),
@@ -229,12 +236,19 @@ class MapView extends StatelessWidget {
   }
 
   List<Marker> _buildMarkers(BuildContext context, MarkerState state) {
+    print('\n=== Construyendo marcadores ===');
+    print('Estado de los marcadores cercanos:');
+    print('- Cargando: ${state.isLoadingNearbyMarkers}');
+    print('- Error: ${state.hasErrorNearbyMarkers}');
+    print('- Número de marcadores: ${state.nearbyMarkers.length}');
+    
     final List<Marker> markers = [];
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     
     // Añadir marcadores cercanos
     for (final model in state.nearbyMarkers) {
+      print('- Añadiendo marcador: ${model.title} (${model.position.latitude}, ${model.position.longitude})');
       markers.add(
         Marker(
           point: model.position,
@@ -256,6 +270,7 @@ class MapView extends StatelessWidget {
     // Añadir marcador de ubicación actual si está disponible
     if (state.hasCurrentLocation) {
       final currentLocation = state.currentLocation!;
+      print('- Añadiendo ubicación actual: (${currentLocation.position.latitude}, ${currentLocation.position.longitude})');
       markers.add(
         Marker(
           point: currentLocation.position,
@@ -272,6 +287,7 @@ class MapView extends StatelessWidget {
       );
     }
     
+    print('Total de marcadores construidos: ${markers.length}');
     return markers;
   }
 } 
