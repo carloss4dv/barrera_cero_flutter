@@ -5,7 +5,7 @@ import 'dart:convert';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  late final SharedPreferences _prefs;
+  SharedPreferences? _prefs;
   static const String _userKey = 'current_user';
   bool _isInitialized = false;
   
@@ -17,23 +17,30 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> _initialize() async {
-    _prefs = await SharedPreferences.getInstance();
-    _isInitialized = true;
-    _auth.authStateChanges().listen((User? user) {
-      if (_isInitialized) {
-        _saveUserToPrefs(user);
-        notifyListeners();
-      }
-    });
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      _isInitialized = true;
+      _auth.authStateChanges().listen((User? user) {
+        if (_isInitialized && _prefs != null) {
+          _saveUserToPrefs(user);
+          notifyListeners();
+        }
+      });
+    } catch (e) {
+      print('Error initializing SharedPreferences: $e');
+      _isInitialized = false;
+    }
   }
 
   Future<void> initPrefs() async {
-    if (!_isInitialized) {
+    if (!_isInitialized || _prefs == null) {
       await _initialize();
     }
-    final savedUserJson = _prefs.getString(_userKey);
-    if (savedUserJson != null && _auth.currentUser == null) {
-      await _prefs.remove(_userKey);
+    if (_prefs != null) {
+      final savedUserJson = _prefs!.getString(_userKey);
+      if (savedUserJson != null && _auth.currentUser == null) {
+        await _prefs!.remove(_userKey);
+      }
     }
   }
 
@@ -41,43 +48,39 @@ class AuthService extends ChangeNotifier {
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Método actualizado para cerrar sesión
   Future<void> signOut() async {
     try {
-      // Cerrar sesión en Firebase
       await _auth.signOut();
-      
-      // Limpiar datos de SharedPreferences
-      await _prefs.remove(_userKey);
-      
-      // Notificar a los listeners del cambio de estado
+      if (_prefs != null) {
+        await _prefs!.remove(_userKey);
+      }
       notifyListeners();
-      
     } catch (e) {
-      print('Error durante el cierre de sesión: $e');
+      print('Error during sign out: $e');
       rethrow;
     }
   }
 
-  // Método para verificar si hay una sesión activa
   Future<bool> checkSession() async {
-    final savedUserJson = _prefs.getString(_userKey);
+    if (_prefs == null) return false;
+    final savedUserJson = _prefs!.getString(_userKey);
     return savedUserJson != null && _auth.currentUser != null;
   }
 
-  // Método para obtener el ID del usuario actual
   String? get currentUserId => currentUser?.uid;
 
   Future<void> _saveUserToPrefs(User? user) async {
+    if (_prefs == null) return;
+    
     if (user == null) {
-      await _prefs.remove(_userKey);
+      await _prefs!.remove(_userKey);
     } else {
       final userData = {
         'uid': user.uid,
         'email': user.email,
         'displayName': user.displayName,
       };
-      await _prefs.setString(_userKey, json.encode(userData));
+      await _prefs!.setString(_userKey, json.encode(userData));
     }
   }
 
