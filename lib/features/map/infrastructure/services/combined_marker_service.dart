@@ -39,12 +39,12 @@ class CombinedMarkerService implements IMarkerService {
 
       print('\nObteniendo marcadores de Firestore...');
       try {
-        // final firestoreResult = await _firestoreService.getNearbyMarkers(
-        //   latitude: latitude,
-        //   longitude: longitude,
-        //   radiusInMeters: radiusInMeters,
-        // );
-        final firestoreResult = await _firestoreService.getAllPlaces();
+        final firestoreResult = await _firestoreService.getNearbyMarkers(
+          latitude: latitude,
+          longitude: longitude,
+          radiusInMeters: radiusInMeters,
+        );
+        //final firestoreResult = await _firestoreService.getAllPlaces();
         print('Marcadores de Firestore: ${firestoreResult.isSuccess ? firestoreResult.success.length : 'Error'}');
         if (firestoreResult.isFailure) {
           print('Error en Firestore: ${firestoreResult.failure}');
