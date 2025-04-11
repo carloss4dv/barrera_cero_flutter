@@ -22,7 +22,7 @@ class CombinedMarkerService implements IMarkerService {
     double radiusInMeters = 1000,
   }) async {
     try {
-      print('Obteniendo marcadores cercanos...');
+      print('\n=== Iniciando getNearbyMarkers ===');
       print('Ubicación: lat=$latitude, lon=$longitude, radio=$radiusInMeters metros');
 
       // Obtener marcadores de ambas fuentes
@@ -33,60 +33,72 @@ class CombinedMarkerService implements IMarkerService {
         radiusInMeters: radiusInMeters,
       );
       print('Marcadores del mockup: ${mockResult.isSuccess ? mockResult.success.length : 'Error'}');
+      if (mockResult.isFailure) {
+        print('Error en mockup: ${mockResult.failure}');
+      }
 
       print('\nObteniendo marcadores de Firestore...');
-    //   final firestoreResult = await _firestoreService.getNearbyMarkers(
-    //     latitude: latitude,
-    //     longitude: longitude,
-    //     radiusInMeters: radiusInMeters,
-    //   );
-      final firestoreResult = await _firestoreService.getAllPlaces();
-      print('Marcadores de Firestore: ${firestoreResult.isSuccess ? firestoreResult.success.length : 'Error'}');
-
-      // Combinar resultados si ambos son exitosos
-      if (mockResult.isSuccess && firestoreResult.isSuccess) {
-        final combinedMarkers = [
-          ...mockResult.success,
-          ...firestoreResult.success,
-        ];
-        
-        print('\nTotal de marcadores combinados: ${combinedMarkers.length}');
-        
-        // Eliminar duplicados basados en ID si existieran
-        final uniqueMarkers = combinedMarkers.fold<Map<String, MarkerModel>>(
-          {},
-          (map, marker) {
-            map[marker.id] = marker;
-            return map;
-          },
-        ).values.toList();
-
-        print('Marcadores únicos después de eliminar duplicados: ${uniqueMarkers.length}');
-        print('\nDetalles de los marcadores:');
-        for (var marker in uniqueMarkers) {
-          print('- ID: ${marker.id}, Tipo: ${marker.type}, Título: ${marker.title}, Posición: ${marker.position.latitude}, ${marker.position.longitude}');
+      try {
+        // final firestoreResult = await _firestoreService.getNearbyMarkers(
+        //   latitude: latitude,
+        //   longitude: longitude,
+        //   radiusInMeters: radiusInMeters,
+        // );
+        final firestoreResult = await _firestoreService.getAllPlaces();
+        print('Marcadores de Firestore: ${firestoreResult.isSuccess ? firestoreResult.success.length : 'Error'}');
+        if (firestoreResult.isFailure) {
+          print('Error en Firestore: ${firestoreResult.failure}');
         }
 
-        return Success(uniqueMarkers);
-      }
+        // Combinar resultados si ambos son exitosos
+        if (mockResult.isSuccess && firestoreResult.isSuccess) {
+          final combinedMarkers = [
+            ...mockResult.success,
+            ...firestoreResult.success,
+          ];
+          
+          print('\nTotal de marcadores combinados: ${combinedMarkers.length}');
+          
+          // Eliminar duplicados basados en ID si existieran
+          final uniqueMarkers = combinedMarkers.fold<Map<String, MarkerModel>>(
+            {},
+            (map, marker) {
+              map[marker.id] = marker;
+              return map;
+            },
+          ).values.toList();
 
-      // Si Firestore falla pero mock funciona, devolver solo mock
-      if (mockResult.isSuccess) {
-        print('\nUsando solo marcadores del mockup debido a error en Firestore');
-        return mockResult;
-      }
+          print('Marcadores únicos después de eliminar duplicados: ${uniqueMarkers.length}');
+          print('\nDetalles de los marcadores:');
+          for (var marker in uniqueMarkers) {
+            print('- ID: ${marker.id}, Tipo: ${marker.type}, Título: ${marker.title}, Posición: ${marker.position.latitude}, ${marker.position.longitude}');
+          }
 
-      // Si mock falla pero Firestore funciona, devolver solo Firestore
-      if (firestoreResult.isSuccess) {
-        print('\nUsando solo marcadores de Firestore debido a error en el mockup');
-        return firestoreResult;
+          return Success(uniqueMarkers);
+        }
+
+        // Si Firestore falla pero mock funciona, devolver solo mock
+        if (mockResult.isSuccess) {
+          print('\nUsando solo marcadores del mockup debido a error en Firestore');
+          return mockResult;
+        }
+
+        // Si mock falla pero Firestore funciona, devolver solo Firestore
+        if (firestoreResult.isSuccess) {
+          print('\nUsando solo marcadores de Firestore debido a error en el mockup');
+          return firestoreResult;
+        }
+      } catch (e) {
+        print('\nError al obtener marcadores de Firestore: $e');
+        print('Stack trace: ${e.toString()}');
       }
 
       // Si ambos fallan, devolver error
       print('\nError al obtener marcadores de ambas fuentes');
       return Failure(const MarkerError.serverError('Error al obtener marcadores de ambas fuentes'));
     } catch (e) {
-      print('\nError inesperado: $e');
+      print('\nError inesperado en getNearbyMarkers: $e');
+      print('Stack trace: ${e.toString()}');
       return Failure(MarkerError.serverError(e.toString()));
     }
   }
