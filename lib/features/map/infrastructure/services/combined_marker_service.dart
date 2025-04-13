@@ -139,20 +139,26 @@ class CombinedMarkerService implements IMarkerService {
     return result;
   }
 
-  // Método para guardar un nuevo lugar (solo en Firestore)
+  @override
   Future<Result<MarkerModel, MarkerError>> savePlace(MarkerModel marker) async {
     print('\nGuardando nuevo lugar en Firestore...');
     print('ID: ${marker.id}');
     print('Título: ${marker.title}');
     print('Posición: ${marker.position.latitude}, ${marker.position.longitude}');
     
-    final result = await _firestoreService.savePlace(marker);
-    if (result.isSuccess) {
-      print('Lugar guardado exitosamente');
-    } else {
-      print('Error al guardar el lugar');
+    try {
+      final result = await _firestoreService.savePlace(marker);
+      if (result.isSuccess) {
+        print('Lugar guardado exitosamente');
+        return result;
+      } else {
+        print('Error al guardar el lugar: ${result.failure}');
+        return Failure(result.failure);
+      }
+    } catch (e) {
+      print('Error inesperado al guardar lugar: $e');
+      return Failure(MarkerError.serverError(e.toString()));
     }
-    return result;
   }
 
   // Método para eliminar un lugar (solo de Firestore)

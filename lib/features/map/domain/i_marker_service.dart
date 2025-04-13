@@ -1,5 +1,7 @@
 import 'package:result_type/result_type.dart';
+import 'package:latlong2/latlong.dart';
 import 'marker_model.dart';
+import 'marker_error.dart';
 
 /// Errores posibles al interactuar con el servicio de marcadores
 class MarkerError implements Exception {
@@ -57,4 +59,10 @@ abstract class IMarkerService {
   /// - [MarkerError.notFound] si el marcador no existe
   /// - [MarkerError.serverError] si hay un error al obtener los datos
   Future<Result<MarkerModel, MarkerError>> getMarkerById(String id);
+
+  /// Guarda un nuevo lugar en el servicio
+  /// 
+  /// Retorna [Result.failure] con:
+  /// - [MarkerError.serverError] si hay un error al guardar los datos
+  Future<Result<MarkerModel, MarkerError>> savePlace(MarkerModel marker);
 } 

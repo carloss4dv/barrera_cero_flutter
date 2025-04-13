@@ -8,6 +8,7 @@ import 'dart:math';
 class MarkerService implements IMarkerService {
   // Lista de marcadores de prueba en Zaragoza
   final List<MarkerModel> _mockMarkers = [
+    /*
     // Marker with no reports to test grey color functionality
     MarkerModel.pointOfInterest(
       id: 'marker_no_reports',
@@ -234,6 +235,7 @@ class MarkerService implements IMarkerService {
         accessibilityScore: 5,
       ),
     ),
+    */
   ];
 
   // Ubicación actual simulada en Zaragoza (Plaza del Pilar)
@@ -312,5 +314,12 @@ class MarkerService implements IMarkerService {
     } catch (e) {
       return Failure(const MarkerError.notFound());
     }
+  }
+
+  @override
+  Future<Result<MarkerModel, MarkerError>> savePlace(MarkerModel marker) async {
+    // En el servicio mock, simplemente devolvemos el marcador
+    // ya que no necesitamos guardarlo en ningún lado
+    return Success(marker);
   }
 } 

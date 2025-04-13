@@ -15,6 +15,7 @@ import '../../../accessibility/presentation/providers/accessibility_provider.dar
 import '../../../challenges/presentation/widgets/challenges_panel.dart';
 import '../../../../main.dart';
 import '../../infrastructure/providers/map_filters_provider.dart';
+import '../../infrastructure/services/run_upload_mock_data.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -210,6 +211,24 @@ class MapView extends StatelessWidget {
                       onPressed: () {
                         // Toggle challenges panel
                         isChallengesPanelExpanded.value = !isChallengesPanelExpanded.value;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Botón temporal para subir datos mock comentar para eliminar de la interfaz
+                    FloatingActionButton(
+                      heroTag: 'upload_mock',
+                      mini: true,
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kAccentColor 
+                          : Colors.white,
+                      child: Icon(
+                        Icons.cloud_upload,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                      ),
+                      onPressed: () {
+                        runUploadMockData();
                       },
                     ),
                   ],
