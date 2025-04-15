@@ -57,6 +57,10 @@ class MapView extends StatelessWidget {
                     if (state.hasSelectedMarker) {
                       context.read<MarkerCubit>().clearSelectedMarker();
                     }
+                    // Limpiar la ruta si está visible
+                    if (state.hasRoute) {
+                      context.read<MarkerCubit>().clearRoute();
+                    }
                   },
                 ),
                 children: [
@@ -79,6 +83,18 @@ class MapView extends StatelessWidget {
                           }
                         : null,
                   ),
+                  
+                  // Capa de ruta si existe
+                  if (state.hasRoute)
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: state.route!,
+                          color: isHighContrastMode ? Colors.yellow : Colors.blue,
+                          strokeWidth: 4,
+                        ),
+                      ],
+                    ),
                   
                   // Capa de marcadores
                   MarkerLayer(
@@ -212,6 +228,24 @@ class MapView extends StatelessWidget {
                       onPressed: () {
                         // Toggle challenges panel
                         isChallengesPanelExpanded.value = !isChallengesPanelExpanded.value;
+                      },
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Botón del foro
+                    FloatingActionButton(
+                      heroTag: 'forum',
+                      mini: true,
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kAccentColor 
+                          : Colors.white,
+                      child: Icon(
+                        Icons.forum,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/forum');
                       },
                     ),
                     

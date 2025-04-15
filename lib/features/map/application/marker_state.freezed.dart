@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$MarkerState {
 
- DataState<List<MarkerModel>> get nearbyMarkersState; DataState<MarkerModel> get currentLocationState; DataState<MarkerModel> get selectedMarkerState; double get searchRadius;
+ DataState<List<MarkerModel>> get nearbyMarkersState; DataState<MarkerModel> get currentLocationState; DataState<MarkerModel> get selectedMarkerState; DataState<List<LatLng>> get routeState; double get searchRadius;
 /// Create a copy of MarkerState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $MarkerStateCopyWith<MarkerState> get copyWith => _$MarkerStateCopyWithImpl<Mark
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is MarkerState&&(identical(other.nearbyMarkersState, nearbyMarkersState) || other.nearbyMarkersState == nearbyMarkersState)&&(identical(other.currentLocationState, currentLocationState) || other.currentLocationState == currentLocationState)&&(identical(other.selectedMarkerState, selectedMarkerState) || other.selectedMarkerState == selectedMarkerState)&&(identical(other.searchRadius, searchRadius) || other.searchRadius == searchRadius));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is MarkerState&&(identical(other.nearbyMarkersState, nearbyMarkersState) || other.nearbyMarkersState == nearbyMarkersState)&&(identical(other.currentLocationState, currentLocationState) || other.currentLocationState == currentLocationState)&&(identical(other.selectedMarkerState, selectedMarkerState) || other.selectedMarkerState == selectedMarkerState)&&(identical(other.routeState, routeState) || other.routeState == routeState)&&(identical(other.searchRadius, searchRadius) || other.searchRadius == searchRadius));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,nearbyMarkersState,currentLocationState,selectedMarkerState,searchRadius);
+int get hashCode => Object.hash(runtimeType,nearbyMarkersState,currentLocationState,selectedMarkerState,routeState,searchRadius);
 
 @override
 String toString() {
-  return 'MarkerState(nearbyMarkersState: $nearbyMarkersState, currentLocationState: $currentLocationState, selectedMarkerState: $selectedMarkerState, searchRadius: $searchRadius)';
+  return 'MarkerState(nearbyMarkersState: $nearbyMarkersState, currentLocationState: $currentLocationState, selectedMarkerState: $selectedMarkerState, routeState: $routeState, searchRadius: $searchRadius)';
 }
 
 
@@ -46,11 +46,11 @@ abstract mixin class $MarkerStateCopyWith<$Res>  {
   factory $MarkerStateCopyWith(MarkerState value, $Res Function(MarkerState) _then) = _$MarkerStateCopyWithImpl;
 @useResult
 $Res call({
- DataState<List<MarkerModel>> nearbyMarkersState, DataState<MarkerModel> currentLocationState, DataState<MarkerModel> selectedMarkerState, double searchRadius
+ DataState<List<MarkerModel>> nearbyMarkersState, DataState<MarkerModel> currentLocationState, DataState<MarkerModel> selectedMarkerState, DataState<List<LatLng>> routeState, double searchRadius
 });
 
 
-$DataStateCopyWith<List<MarkerModel>, $Res> get nearbyMarkersState;$DataStateCopyWith<MarkerModel, $Res> get currentLocationState;$DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState;
+$DataStateCopyWith<List<MarkerModel>, $Res> get nearbyMarkersState;$DataStateCopyWith<MarkerModel, $Res> get currentLocationState;$DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState;$DataStateCopyWith<List<LatLng>, $Res> get routeState;
 
 }
 /// @nodoc
@@ -63,12 +63,13 @@ class _$MarkerStateCopyWithImpl<$Res>
 
 /// Create a copy of MarkerState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? nearbyMarkersState = null,Object? currentLocationState = null,Object? selectedMarkerState = null,Object? searchRadius = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? nearbyMarkersState = null,Object? currentLocationState = null,Object? selectedMarkerState = null,Object? routeState = null,Object? searchRadius = null,}) {
   return _then(_self.copyWith(
 nearbyMarkersState: null == nearbyMarkersState ? _self.nearbyMarkersState : nearbyMarkersState // ignore: cast_nullable_to_non_nullable
 as DataState<List<MarkerModel>>,currentLocationState: null == currentLocationState ? _self.currentLocationState : currentLocationState // ignore: cast_nullable_to_non_nullable
 as DataState<MarkerModel>,selectedMarkerState: null == selectedMarkerState ? _self.selectedMarkerState : selectedMarkerState // ignore: cast_nullable_to_non_nullable
-as DataState<MarkerModel>,searchRadius: null == searchRadius ? _self.searchRadius : searchRadius // ignore: cast_nullable_to_non_nullable
+as DataState<MarkerModel>,routeState: null == routeState ? _self.routeState : routeState // ignore: cast_nullable_to_non_nullable
+as DataState<List<LatLng>>,searchRadius: null == searchRadius ? _self.searchRadius : searchRadius // ignore: cast_nullable_to_non_nullable
 as double,
   ));
 }
@@ -99,6 +100,15 @@ $DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState {
   return $DataStateCopyWith<MarkerModel, $Res>(_self.selectedMarkerState, (value) {
     return _then(_self.copyWith(selectedMarkerState: value));
   });
+}/// Create a copy of MarkerState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$DataStateCopyWith<List<LatLng>, $Res> get routeState {
+  
+  return $DataStateCopyWith<List<LatLng>, $Res>(_self.routeState, (value) {
+    return _then(_self.copyWith(routeState: value));
+  });
 }
 }
 
@@ -107,12 +117,13 @@ $DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState {
 
 
 class _MarkerState extends MarkerState {
-  const _MarkerState({required this.nearbyMarkersState, required this.currentLocationState, required this.selectedMarkerState, this.searchRadius = 1000.0}): super._();
+  const _MarkerState({required this.nearbyMarkersState, required this.currentLocationState, required this.selectedMarkerState, required this.routeState, this.searchRadius = 1000.0}): super._();
   
 
 @override final  DataState<List<MarkerModel>> nearbyMarkersState;
 @override final  DataState<MarkerModel> currentLocationState;
 @override final  DataState<MarkerModel> selectedMarkerState;
+@override final  DataState<List<LatLng>> routeState;
 @override@JsonKey() final  double searchRadius;
 
 /// Create a copy of MarkerState
@@ -125,16 +136,16 @@ _$MarkerStateCopyWith<_MarkerState> get copyWith => __$MarkerStateCopyWithImpl<_
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MarkerState&&(identical(other.nearbyMarkersState, nearbyMarkersState) || other.nearbyMarkersState == nearbyMarkersState)&&(identical(other.currentLocationState, currentLocationState) || other.currentLocationState == currentLocationState)&&(identical(other.selectedMarkerState, selectedMarkerState) || other.selectedMarkerState == selectedMarkerState)&&(identical(other.searchRadius, searchRadius) || other.searchRadius == searchRadius));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _MarkerState&&(identical(other.nearbyMarkersState, nearbyMarkersState) || other.nearbyMarkersState == nearbyMarkersState)&&(identical(other.currentLocationState, currentLocationState) || other.currentLocationState == currentLocationState)&&(identical(other.selectedMarkerState, selectedMarkerState) || other.selectedMarkerState == selectedMarkerState)&&(identical(other.routeState, routeState) || other.routeState == routeState)&&(identical(other.searchRadius, searchRadius) || other.searchRadius == searchRadius));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,nearbyMarkersState,currentLocationState,selectedMarkerState,searchRadius);
+int get hashCode => Object.hash(runtimeType,nearbyMarkersState,currentLocationState,selectedMarkerState,routeState,searchRadius);
 
 @override
 String toString() {
-  return 'MarkerState(nearbyMarkersState: $nearbyMarkersState, currentLocationState: $currentLocationState, selectedMarkerState: $selectedMarkerState, searchRadius: $searchRadius)';
+  return 'MarkerState(nearbyMarkersState: $nearbyMarkersState, currentLocationState: $currentLocationState, selectedMarkerState: $selectedMarkerState, routeState: $routeState, searchRadius: $searchRadius)';
 }
 
 
@@ -145,11 +156,11 @@ abstract mixin class _$MarkerStateCopyWith<$Res> implements $MarkerStateCopyWith
   factory _$MarkerStateCopyWith(_MarkerState value, $Res Function(_MarkerState) _then) = __$MarkerStateCopyWithImpl;
 @override @useResult
 $Res call({
- DataState<List<MarkerModel>> nearbyMarkersState, DataState<MarkerModel> currentLocationState, DataState<MarkerModel> selectedMarkerState, double searchRadius
+ DataState<List<MarkerModel>> nearbyMarkersState, DataState<MarkerModel> currentLocationState, DataState<MarkerModel> selectedMarkerState, DataState<List<LatLng>> routeState, double searchRadius
 });
 
 
-@override $DataStateCopyWith<List<MarkerModel>, $Res> get nearbyMarkersState;@override $DataStateCopyWith<MarkerModel, $Res> get currentLocationState;@override $DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState;
+@override $DataStateCopyWith<List<MarkerModel>, $Res> get nearbyMarkersState;@override $DataStateCopyWith<MarkerModel, $Res> get currentLocationState;@override $DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState;@override $DataStateCopyWith<List<LatLng>, $Res> get routeState;
 
 }
 /// @nodoc
@@ -162,12 +173,13 @@ class __$MarkerStateCopyWithImpl<$Res>
 
 /// Create a copy of MarkerState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? nearbyMarkersState = null,Object? currentLocationState = null,Object? selectedMarkerState = null,Object? searchRadius = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? nearbyMarkersState = null,Object? currentLocationState = null,Object? selectedMarkerState = null,Object? routeState = null,Object? searchRadius = null,}) {
   return _then(_MarkerState(
 nearbyMarkersState: null == nearbyMarkersState ? _self.nearbyMarkersState : nearbyMarkersState // ignore: cast_nullable_to_non_nullable
 as DataState<List<MarkerModel>>,currentLocationState: null == currentLocationState ? _self.currentLocationState : currentLocationState // ignore: cast_nullable_to_non_nullable
 as DataState<MarkerModel>,selectedMarkerState: null == selectedMarkerState ? _self.selectedMarkerState : selectedMarkerState // ignore: cast_nullable_to_non_nullable
-as DataState<MarkerModel>,searchRadius: null == searchRadius ? _self.searchRadius : searchRadius // ignore: cast_nullable_to_non_nullable
+as DataState<MarkerModel>,routeState: null == routeState ? _self.routeState : routeState // ignore: cast_nullable_to_non_nullable
+as DataState<List<LatLng>>,searchRadius: null == searchRadius ? _self.searchRadius : searchRadius // ignore: cast_nullable_to_non_nullable
 as double,
   ));
 }
@@ -198,6 +210,15 @@ $DataStateCopyWith<MarkerModel, $Res> get selectedMarkerState {
   
   return $DataStateCopyWith<MarkerModel, $Res>(_self.selectedMarkerState, (value) {
     return _then(_self.copyWith(selectedMarkerState: value));
+  });
+}/// Create a copy of MarkerState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$DataStateCopyWith<List<LatLng>, $Res> get routeState {
+  
+  return $DataStateCopyWith<List<LatLng>, $Res>(_self.routeState, (value) {
+    return _then(_self.copyWith(routeState: value));
   });
 }
 }

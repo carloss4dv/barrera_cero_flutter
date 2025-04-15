@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import '../domain/marker_model.dart';
+import 'package:latlong2/latlong.dart';
 
 part 'marker_state.freezed.dart';
 
@@ -12,6 +13,7 @@ abstract class MarkerState with _$MarkerState {
     required DataState<List<MarkerModel>> nearbyMarkersState,
     required DataState<MarkerModel> currentLocationState,
     required DataState<MarkerModel> selectedMarkerState,
+    required DataState<List<LatLng>> routeState,
     @Default(1000.0) double searchRadius,
   }) = _MarkerState;
 
@@ -37,11 +39,18 @@ abstract class MarkerState with _$MarkerState {
   bool get hasSelectedMarker => selectedMarkerState.isSuccess && selectedMarkerState.data != null;
   MarkerModel? get selectedMarker => selectedMarkerState.data;
 
+  // Estados para la ruta
+  bool get isLoadingRoute => routeState.isLoading;
+  bool get hasErrorRoute => routeState.hasError;
+  bool get hasRoute => routeState.isSuccess && routeState.data != null && routeState.data!.isNotEmpty;
+  List<LatLng>? get route => routeState.data;
+
   // Estado inicial
   factory MarkerState.initial() => const MarkerState(
     nearbyMarkersState: DataState.idle(),
     currentLocationState: DataState.idle(),
     selectedMarkerState: DataState.idle(),
+    routeState: DataState.idle(),
     searchRadius: 1000.0,
   );
 }

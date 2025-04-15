@@ -5,15 +5,20 @@ import 'package:result_type/result_type.dart';
 
 import '../domain/i_marker_service.dart';
 import '../domain/marker_model.dart';
+import '../domain/route_error.dart';
+import '../infrastructure/services/route_service.dart';
 import 'marker_state.dart';
 
 /// Cubit para gestionar los marcadores en el mapa
 class MarkerCubit extends Cubit<MarkerState> {
   final IMarkerService _markerService;
+  final RouteService _routeService;
 
   MarkerCubit({
     IMarkerService? markerService,
+    RouteService? routeService,
   })  : _markerService = markerService ?? GetIt.instance<IMarkerService>(),
+        _routeService = routeService ?? RouteService(),
         super(MarkerState.initial());
 
   /// Inicializa el cubit cargando la ubicación actual y los marcadores cercanos
@@ -147,6 +152,7 @@ class MarkerCubit extends Cubit<MarkerState> {
   void clearSelectedMarker() {
     emit(state.copyWith(
       selectedMarkerState: const DataState.idle(),
+      routeState: const DataState.idle(),
     ));
     
     // Si tenemos ubicación actual, volvemos a cargar los marcadores cercanos
@@ -173,5 +179,55 @@ class MarkerCubit extends Cubit<MarkerState> {
         longitude: state.currentLocation!.position.longitude,
       );
     }
+  }
+
+  /// Obtiene una ruta adaptada entre la ubicación actual y un destino
+  Future<void> getRouteToDestination(MarkerModel destination) async {
+    if (!state.hasCurrentLocation) {
+      emit(state.copyWith(
+        routeState: const DataState.error('No se ha podido obtener la ubicación actual'),
+      ));
+      return;
+    }
+
+    emit(state.copyWith(
+      routeState: const DataState.loading(),
+    ));
+
+    final result = await _routeService.getAdaptedRoute(
+      start: state.currentLocation!.position,
+      end: destination.position,
+    );
+
+    if (result.isSuccess) {
+      emit(state.copyWith(
+        routeState: DataState.success(result.success),
+      ));
+    } else {
+      String errorMessage;
+      switch (result.failure.type) {
+        case RouteErrorType.routeServiceError:
+          errorMessage = result.failure.message ?? 'Error al obtener la ruta del servicio';
+          break;
+        case RouteErrorType.currentLocationError:
+          errorMessage = 'No se pudo obtener la ubicación actual';
+          break;
+        case RouteErrorType.noAccessibleRoute:
+          errorMessage = 'No hay ruta accesible disponible';
+          break;
+        default:
+          errorMessage = 'Error desconocido al obtener la ruta';
+      }
+      emit(state.copyWith(
+        routeState: DataState.error(errorMessage),
+      ));
+    }
+  }
+
+  /// Limpia la ruta actual
+  void clearRoute() {
+    emit(state.copyWith(
+      routeState: const DataState.idle(),
+    ));
   }
 } 

@@ -9,6 +9,7 @@ import '../../domain/marker_model.dart';
 import '../../../accessibility/domain/community_validation_model.dart';
 import '../../../accessibility/domain/i_community_validation_service.dart';
 import 'package:result_dart/result_dart.dart';
+import '../../application/marker_cubit.dart';
 
 class MarkerDetailCard extends StatefulWidget {
   final MarkerModel marker;
@@ -226,15 +227,28 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                     ),
                   ),
                   
-                  // Botón para cómo llegar
+                  // Botón de "Cómo llegar"
                   Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: Icon(Icons.directions),
-                        label: const Text('Cómo llegar'),
-                        onPressed: widget.onGetDirections,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<MarkerCubit>().getRouteToDestination(widget.marker);
+                      },
+                      icon: Icon(
+                        Icons.directions,
+                        color: isHighContrastMode ? Colors.black : Colors.white,
+                      ),
+                      label: Text(
+                        'Cómo llegar',
+                        style: TextStyle(
+                          color: isHighContrastMode ? Colors.black : Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isHighContrastMode 
+                            ? AccessibilityProvider.kAccentColor 
+                            : Colors.blue,
+                        minimumSize: const Size(double.infinity, 48),
                       ),
                     ),
                   ),

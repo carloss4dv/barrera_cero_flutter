@@ -10,6 +10,8 @@ import 'features/auth/presentation/login_page.dart';
 import 'features/auth/presentation/register_pages.dart';
 import 'features/users/presentation/profile_page.dart';
 import 'features/map/infrastructure/providers/map_filters_provider.dart';
+import 'features/forum/presentation/screens/forum_screen.dart';
+import 'features/forum/di/forum_module.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -27,6 +29,7 @@ void setupDependencies() {
   registerMapDependencies(getIt);
   configureAccessibilityDependencies(); // Registrar servicios de accesibilidad
   getIt.registerSingleton<AuthService>(authService); // Use the global singleton instance directly
+  ForumModule.init(); // Registrar dependencias del foro
 }
 
 void main() async {
@@ -73,6 +76,7 @@ class MyApp extends StatelessWidget {
                 }
                 return ProfilePage(userId: args);
               },
+              '/forum': (context) => const ForumScreen(),
             },
           );
         },
