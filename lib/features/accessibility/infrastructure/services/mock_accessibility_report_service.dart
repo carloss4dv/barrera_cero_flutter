@@ -1,10 +1,12 @@
 import 'package:result_dart/result_dart.dart';
 import '../../domain/accessibility_report_model.dart';
 import '../../domain/i_accessibility_report_service.dart';
+import 'dart:math';
 
 class MockAccessibilityReportService implements IAccessibilityReportService {
   final Map<String, List<AccessibilityReportModel>> _markerReports = {};
   int _lastReportId = 0;
+  final Random _random = Random();
   
   // Inicializar con datos mock
   MockAccessibilityReportService() {
@@ -14,6 +16,35 @@ class MockAccessibilityReportService implements IAccessibilityReportService {
   String _generateId() {
     _lastReportId++;
     return 'report_$_lastReportId';
+  }
+
+  String _getRandomComment(AccessibilityLevel level) {
+    final comments = {
+      AccessibilityLevel.good: [
+        'Excelente accesibilidad, todo está perfectamente adaptado',
+        'Muy buena accesibilidad, no encontré ningún problema',
+        'Totalmente accesible para personas con movilidad reducida',
+        'Las instalaciones están muy bien adaptadas',
+        'No hay barreras arquitectónicas',
+      ],
+      AccessibilityLevel.medium: [
+        'Accesibilidad aceptable, pero hay algunas mejoras posibles',
+        'Algunas áreas son accesibles, otras no tanto',
+        'Hay rampas pero podrían estar mejor mantenidas',
+        'La accesibilidad es regular, hay que mejorar algunos aspectos',
+        'Algunos obstáculos en el camino',
+      ],
+      AccessibilityLevel.bad: [
+        'Muy mala accesibilidad, casi imposible moverse',
+        'No hay adaptaciones para personas con movilidad reducida',
+        'Muchas barreras arquitectónicas',
+        'Imposible acceder con silla de ruedas',
+        'Necesita mejoras urgentes en accesibilidad',
+      ],
+    };
+    
+    final levelComments = comments[level]!;
+    return levelComments[_random.nextInt(levelComments.length)];
   }
   
   void _initMockData() {

@@ -266,24 +266,6 @@ class MapView extends StatelessWidget {
                         runUploadMockData();
                       },
                     ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Botón para subir datos mock de validación
-                    FloatingActionButton(
-                      heroTag: 'upload_validation_mock',
-                      mini: true,
-                      backgroundColor: isHighContrastMode 
-                          ? AccessibilityProvider.kAccentColor 
-                          : Colors.white,
-                      child: Icon(
-                        Icons.verified_user,
-                        color: isHighContrastMode ? Colors.black : Colors.black87,
-                      ),
-                      onPressed: () {
-                        runUploadValidationMockData();
-                      },
-                    ),
                   ],
                 ),
               ),

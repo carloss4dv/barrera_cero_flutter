@@ -1,294 +1,239 @@
 import 'package:get_it/get_it.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../domain/i_marker_service.dart';
 import '../../domain/marker_model.dart';
 import '../../domain/marker_metadata.dart';
 import 'combined_marker_service.dart';
+import 'dart:math';
+import '../../../accessibility/domain/i_community_validation_service.dart';
+import '../../../accessibility/domain/community_validation_model.dart';
+import 'package:result_dart/result_dart.dart';
 
 class MockDataUploader {
   final IMarkerService _markerService;
+  final ICommunityValidationService _validationService;
+  final Random _random = Random();
+  final http.Client _client = http.Client();
 
-  MockDataUploader({IMarkerService? markerService})
-      : _markerService = markerService ?? GetIt.instance<IMarkerService>();
+  MockDataUploader({
+    IMarkerService? markerService,
+    ICommunityValidationService? validationService,
+  })  : _markerService = markerService ?? GetIt.instance<IMarkerService>(),
+        _validationService = validationService ?? GetIt.instance<ICommunityValidationService>();
+
+  // Función para obtener lugares de Zaragoza usando Overpass API
+  Future<List<Map<String, dynamic>>> _getZaragozaPlaces() async {
+    final query = '''
+      [out:json][timeout:25];
+      area[name="Zaragoza"]->.zaragoza;
+      (
+        node["amenity"~"restaurant|bar|cafe|university|school|hospital|theatre|cinema|library|museum|park"]["name"](area.zaragoza);
+        way["amenity"~"restaurant|bar|cafe|university|school|hospital|theatre|cinema|library|museum|park"]["name"](area.zaragoza);
+        relation["amenity"~"restaurant|bar|cafe|university|school|hospital|theatre|cinema|library|museum|park"]["name"](area.zaragoza);
+      );
+      out body;
+      >;
+      out skel qt;
+    ''';
+
+    try {
+      final response = await _client.post(
+        Uri.parse('https://overpass-api.de/api/interpreter'),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8',
+        },
+        body: query,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final elements = data['elements'] as List;
+        
+        return elements.where((element) {
+          final tags = element['tags'] as Map<String, dynamic>? ?? {};
+          return tags['name'] != null && tags['name'].toString().trim().isNotEmpty;
+        }).map((element) {
+          final tags = element['tags'] as Map<String, dynamic>;
+          final lat = element['lat'] as double? ?? 0.0;
+          final lon = element['lon'] as double? ?? 0.0;
+          
+          return {
+            'name': tags['name'] as String,
+            'lat': lat,
+            'lng': lon,
+            'type': tags['amenity'] as String? ?? 'unknown',
+          };
+        }).toList();
+      } else {
+        print('Error al obtener datos de Overpass: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Error al conectar con Overpass: $e');
+      return [];
+    }
+  }
+
+  // Función auxiliar para generar puntos de interés
+  MarkerModel _generatePointOfInterest({
+    required String id,
+    required double lat,
+    required double lng,
+    required String title,
+    required String description,
+    required String type,
+    required int accessibilityScore,
+  }) {
+    final hasRamp = accessibilityScore >= 3;
+    final hasElevator = accessibilityScore >= 4;
+    final hasAccessibleBathroom = accessibilityScore >= 3;
+    final hasBrailleSignage = accessibilityScore >= 3;
+    final hasAudioGuidance = accessibilityScore >= 4;
+    final hasTactilePavement = accessibilityScore >= 3;
+
+    final metadata = MarkerMetadata(
+      hasRamp: hasRamp,
+      hasElevator: hasElevator,
+      hasAccessibleBathroom: hasAccessibleBathroom,
+      hasBrailleSignage: hasBrailleSignage,
+      hasAudioGuidance: hasAudioGuidance,
+      hasTactilePavement: hasTactilePavement,
+      additionalNotes: _getAccessibilityNotes(accessibilityScore),
+      accessibilityScore: accessibilityScore,
+    );
+
+    return type == 'pointOfInterest'
+        ? MarkerModel.pointOfInterest(
+            id: id,
+            position: LatLng(lat, lng),
+            title: title,
+            description: description,
+            metadata: metadata,
+          )
+        : MarkerModel.destination(
+            id: id,
+            position: LatLng(lat, lng),
+            title: title,
+            description: description,
+            metadata: metadata,
+          );
+  }
+
+  String _getAccessibilityNotes(int score) {
+    switch (score) {
+      case 5:
+        return 'Excelente accesibilidad en todo el recinto';
+      case 4:
+        return 'Buena accesibilidad con algunas limitaciones menores';
+      case 3:
+        return 'Accesibilidad media, con algunas áreas adaptadas';
+      case 2:
+        return 'Accesibilidad limitada, requiere mejoras';
+      case 1:
+        return 'Accesibilidad muy limitada';
+      default:
+        return 'Sin reportes de accesibilidad';
+    }
+  }
+
+  // Función para generar votos de validación
+  Future<void> _generateValidationVotes(String markerId, int accessibilityScore) async {
+    final questionTypes = [
+      ValidationQuestionType.rampExists,
+      ValidationQuestionType.rampCondition,
+      ValidationQuestionType.rampWidth,
+      ValidationQuestionType.rampSlope,
+      ValidationQuestionType.rampHandrails,
+      ValidationQuestionType.rampLanding,
+      ValidationQuestionType.rampObstacles,
+      ValidationQuestionType.rampSurface,
+      ValidationQuestionType.rampVisibility,
+      ValidationQuestionType.rampMaintenance,
+    ];
+
+    for (final questionType in questionTypes) {
+      // Crear la validación si no existe
+      final createResult = await _validationService.createValidation(markerId, questionType);
+      final validationCreated = createResult.fold(
+        (validation) => true,
+        (error) {
+          print('Error al crear validación para ${markerId}: $error');
+          return false;
+        },
+      );
+
+      if (!validationCreated) continue;
+
+      // Generar votos aleatorios basados en el nivel de accesibilidad
+      final numVotes = _random.nextInt(5) + 6; // Entre 6 y 10 votos
+      final positiveVotes = (numVotes * (accessibilityScore / 5)).round();
+      final negativeVotes = numVotes - positiveVotes;
+
+      // Simular votos de diferentes usuarios
+      for (int i = 0; i < numVotes; i++) {
+        final isPositive = i < positiveVotes;
+        final userId = 'user_${_random.nextInt(1000)}';
+        
+        final voteResult = await _validationService.addVote(
+          markerId,
+          questionType,
+          isPositive,
+          userId,
+        );
+
+        voteResult.fold(
+          (validation) => null,
+          (error) => print('Error al añadir voto para ${markerId}: $error'),
+        );
+      }
+    }
+  }
 
   Future<void> uploadMockData() async {
     print('\n=== Iniciando subida de datos mock a Firestore ===');
     
-    // Lista de marcadores de prueba
-    final mockMarkers = [
-      // Marker with no reports to test grey color functionality
-      {
-        'id': 'marker_no_reports',
-        'position': {'latitude': 41.6480, 'longitude': -0.8830},
-        'title': 'Punto sin reportes',
-        'description': 'Este punto no tiene reportes de accesibilidad',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': false,
-          'hasElevator': false,
-          'hasAccessibleBathroom': false,
-          'hasBrailleSignage': false,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': false,
-          'additionalNotes': 'Sin reportes de accesibilidad',
-          'accessibilityScore': 0,
-        },
-      },
-      {
-        'id': 'marker_plaza_pilar',
-        'position': {'latitude': 41.6560, 'longitude': -0.8773},
-        'title': 'Basílica del Pilar',
-        'description': 'Principal símbolo de Zaragoza y centro religioso',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': true,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': true,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Excelente accesibilidad en todo el recinto',
-          'accessibilityScore': 5,
-        },
-      },
-      {
-        'id': 'marker_aljaferia',
-        'position': {'latitude': 41.6617, 'longitude': -0.8940},
-        'title': 'Palacio de la Aljafería',
-        'description': 'Palacio fortificado del siglo XI',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': false,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': true,
-          'hasTactilePavement': false,
-          'additionalNotes': 'Algunas áreas históricas tienen acceso limitado',
-          'accessibilityScore': 3,
-        },
-      },
-      {
-        'id': 'marker_parque_grande',
-        'position': {'latitude': 41.6362, 'longitude': -0.8951},
-        'title': 'Parque Grande José Antonio Labordeta',
-        'description': 'Pulmón verde de la ciudad',
-        'type': 'destination',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': false,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Senderos accesibles y áreas de descanso',
-          'accessibilityScore': 4,
-        },
-      },
-      {
-        'id': 'marker_mercado_central',
-        'position': {'latitude': 41.6541, 'longitude': -0.8780},
-        'title': 'Mercado Central',
-        'description': 'Mercado histórico de productos frescos',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': true,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': false,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Acceso adaptado a todos los puestos',
-          'accessibilityScore': 4,
-        },
-      },
-      {
-        'id': 'marker_puente_piedra',
-        'position': {'latitude': 41.6575, 'longitude': -0.8780},
-        'title': 'Puente de Piedra',
-        'description': 'Puente histórico sobre el río Ebro',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': false,
-          'hasAccessibleBathroom': false,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Rampas en ambos extremos del puente',
-          'accessibilityScore': 3,
-        },
-      },
-      {
-        'id': 'marker_estacion_delicias',
-        'position': {'latitude': 41.6592, 'longitude': -0.9117},
-        'title': 'Estación Delicias',
-        'description': 'Estación de tren y autobuses',
-        'type': 'destination',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': true,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': true,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Estación completamente adaptada',
-          'accessibilityScore': 5,
-        },
-      },
-      {
-        'id': 'marker_el_tubo',
-        'position': {'latitude': 41.6519, 'longitude': -0.8792},
-        'title': 'El Tubo',
-        'description': 'Zona de tapas tradicional',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': false,
-          'hasElevator': false,
-          'hasAccessibleBathroom': false,
-          'hasBrailleSignage': false,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': false,
-          'additionalNotes': 'Zona histórica con accesibilidad limitada',
-          'accessibilityScore': 1,
-        },
-      },
-      {
-        'id': 'marker_grancasa',
-        'position': {'latitude': 41.6710, 'longitude': -0.8940},
-        'title': 'Centro Comercial GranCasa',
-        'description': 'Centro comercial con tiendas y restaurantes',
-        'type': 'destination',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': true,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': true,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Centro comercial completamente accesible',
-          'accessibilityScore': 5,
-        },
-      },
-      {
-        'id': 'marker_universidad',
-        'position': {'latitude': 41.6435, 'longitude': -0.8960},
-        'title': 'Ciudad Universitaria',
-        'description': 'Campus principal de la Universidad de Zaragoza',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': true,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Campus adaptado para personas con movilidad reducida',
-          'accessibilityScore': 4,
-        },
-      },
-      {
-        'id': 'marker_plaza_mayor',
-        'position': {'latitude': 41.6515, 'longitude': -0.8761},
-        'title': 'Catedral de San Salvador (La Seo)',
-        'description': 'Catedral histórica con estilos arquitectónicos diversos',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': false,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': true,
-          'hasTactilePavement': false,
-          'additionalNotes': 'Acceso adaptado a la planta principal',
-          'accessibilityScore': 3,
-        },
-      },
-      {
-        'id': 'marker_calle_principal',
-        'position': {'latitude': 41.6505, 'longitude': -0.8790},
-        'title': 'Calle Alfonso I',
-        'description': 'Calle comercial peatonal en el centro',
-        'type': 'destination',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': false,
-          'hasAccessibleBathroom': false,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Calle peatonal con pavimento accesible',
-          'accessibilityScore': 4,
-        },
-      },
-      {
-        'id': 'marker_callejon',
-        'position': {'latitude': 41.6525, 'longitude': -0.8810},
-        'title': 'Callejón del Arco',
-        'description': 'Callejón estrecho del casco histórico',
-        'type': 'pointOfInterest',
-        'metadata': {
-          'hasRamp': false,
-          'hasElevator': false,
-          'hasAccessibleBathroom': false,
-          'hasBrailleSignage': false,
-          'hasAudioGuidance': false,
-          'hasTactilePavement': false,
-          'additionalNotes': 'Zona histórica con accesibilidad limitada',
-          'accessibilityScore': 1,
-        },
-      },
-      {
-        'id': 'marker_acuario',
-        'position': {'latitude': 41.6683, 'longitude': -0.8934},
-        'title': 'Acuario de Zaragoza',
-        'description': 'El acuario fluvial más grande de Europa',
-        'type': 'destination',
-        'metadata': {
-          'hasRamp': true,
-          'hasElevator': true,
-          'hasAccessibleBathroom': true,
-          'hasBrailleSignage': true,
-          'hasAudioGuidance': true,
-          'hasTactilePavement': true,
-          'additionalNotes': 'Recorrido completamente adaptado',
-          'accessibilityScore': 5,
-        },
-      },
-    ];
+    // Obtener lugares de Zaragoza desde OpenStreetMap
+    final places = await _getZaragozaPlaces();
+    print('Se encontraron ${places.length} lugares con nombre en Zaragoza');
 
-    // Subir cada marcador a Firestore
-    for (var markerData in mockMarkers) {
+    // Generar puntos de interés basados en los lugares obtenidos
+    int creados = 0;
+    for (int i = 0; i < places.length && creados < 200; i++) {
+      final place = places[i];
+      
+      // Distribuir uniformemente los niveles de accesibilidad
+      final int accessibilityScore = (creados % 5) + 1;
+
+      final marker = _generatePointOfInterest(
+        id: 'marker_${creados + 1}',
+        lat: place['lat'],
+        lng: place['lng'],
+        title: place['name'],
+        description: '${place['name']} - ${place['type']}',
+        type: creados % 2 == 0 ? 'pointOfInterest' : 'destination',
+        accessibilityScore: accessibilityScore,
+      );
+
       try {
-        print('\nSubiendo marcador: ${markerData['title']}');
-        
-        final result = await _markerService.savePlace(
-          MarkerModel(
-            id: markerData['id'] as String,
-            position: LatLng(
-              (markerData['position'] as Map<String, dynamic>)['latitude'] as double,
-              (markerData['position'] as Map<String, dynamic>)['longitude'] as double,
-            ),
-            type: MarkerType.values.firstWhere(
-              (e) => e.toString() == 'MarkerType.${markerData['type']}',
-              orElse: () => MarkerType.pointOfInterest,
-            ),
-            title: markerData['title'] as String,
-            description: markerData['description'] as String,
-            metadata: MarkerMetadata.fromJson(markerData['metadata'] as Map<String, dynamic>),
-          ),
-        );
-
+        // Guardar el marcador
+        final result = await _markerService.savePlace(marker);
         if (result.isSuccess) {
-          print('✅ Marcador subido exitosamente');
+          print('Marcador creado: ${marker.id} - ${place['name']}');
+          
+          // Generar votos de validación para el marcador
+          await _generateValidationVotes(marker.id, accessibilityScore);
+          print('Validaciones generadas para: ${marker.id}');
+          creados++;
         } else {
-          print('❌ Error al subir marcador: ${result.failure}');
+          print('Error al crear marcador ${marker.id}: ${result.failure}');
         }
       } catch (e) {
-        print('❌ Error al procesar marcador: $e');
+        print('Error al procesar marcador ${marker.id}: $e');
       }
     }
 
-    print('\n=== Proceso de subida completado ===');
+    print('=== Subida de datos mock completada: $creados lugares creados ===\n');
   }
 } 
