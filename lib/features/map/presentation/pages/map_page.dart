@@ -16,6 +16,7 @@ import '../../../challenges/presentation/widgets/challenges_panel.dart';
 import '../../../../main.dart';
 import '../../infrastructure/providers/map_filters_provider.dart';
 import '../../infrastructure/services/run_upload_mock_data.dart';
+import '../../../accessibility/infrastructure/services/run_upload_validation_mock_data.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -229,6 +230,24 @@ class MapView extends StatelessWidget {
                       ),
                       onPressed: () {
                         runUploadMockData();
+                      },
+                    ),
+                    
+                    const SizedBox(height: 8),
+                    
+                    // Botón para subir datos mock de validación
+                    FloatingActionButton(
+                      heroTag: 'upload_validation_mock',
+                      mini: true,
+                      backgroundColor: isHighContrastMode 
+                          ? AccessibilityProvider.kAccentColor 
+                          : Colors.white,
+                      child: Icon(
+                        Icons.verified_user,
+                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                      ),
+                      onPressed: () {
+                        runUploadValidationMockData();
                       },
                     ),
                   ],

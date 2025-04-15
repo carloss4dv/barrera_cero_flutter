@@ -6,6 +6,9 @@ import '../../../../features/accessibility/presentation/widgets/accessibility_co
 import '../../../accessibility/domain/i_accessibility_report_service.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 import '../../domain/marker_model.dart';
+import '../../../accessibility/domain/community_validation_model.dart';
+import '../../../accessibility/domain/i_community_validation_service.dart';
+import 'package:result_dart/result_dart.dart';
 
 class MarkerDetailCard extends StatefulWidget {
   final MarkerModel marker;
@@ -28,38 +31,76 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
   bool _isExpanded = false;
   bool _isLoading = true;
   List<AccessibilityReportModel>? _reports;
+  List<CommunityValidationModel>? _validations;
   String? _errorMessage;
   late IAccessibilityReportService _reportService;
+  late ICommunityValidationService _validationService;
   
   @override
   void initState() {
     super.initState();
     _reportService = GetIt.instance<IAccessibilityReportService>();
-    _loadReports();
+    _validationService = GetIt.instance<ICommunityValidationService>();
+    _loadData();
   }
   
-  Future<void> _loadReports() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
     
+    await Future.wait([
+      _loadReports(),
+      _loadValidations(),
+    ]);
+    
+    setState(() {
+      _isLoading = false;
+    });
+  }
+  
+  Future<void> _loadReports() async {
     final result = await _reportService.getReportsForMarker(widget.marker.id);
     
     result.fold(
       (reports) {
         setState(() {
           _reports = reports;
-          _isLoading = false;
         });
       },
       (error) {
         setState(() {
           _errorMessage = error.message;
-          _isLoading = false;
         });
       },
     );
+  }
+  
+  Future<void> _loadValidations() async {
+    try {
+      final result = await _validationService.getValidationsForMarker(widget.marker.id);
+      result.fold(
+        (validations) {
+          setState(() {
+            _validations = validations;
+          });
+        },
+        (error) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(error.toString())),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
   }
   
   @override
@@ -286,27 +327,23 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                         ),
                         const SizedBox(height: 12),
                         _buildValidationQuestion(
-                          question: '¿Hay rampas de acceso?',
-                          currentVotes: 8,
-                          totalVotes: 10,
+                          question: '¿Existe una rampa en este lugar?',
+                          questionType: ValidationQuestionType.rampExists,
                         ),
                         const SizedBox(height: 12),
                         _buildValidationQuestion(
-                          question: '¿Hay baños adaptados?',
-                          currentVotes: 5,
-                          totalVotes: 10,
+                          question: '¿En qué estado se encuentra la rampa?',
+                          questionType: ValidationQuestionType.rampCondition,
                         ),
                         const SizedBox(height: 12),
                         _buildValidationQuestion(
-                          question: '¿Hay ascensores accesibles?',
-                          currentVotes: 3,
-                          totalVotes: 10,
+                          question: '¿La rampa tiene el ancho adecuado?',
+                          questionType: ValidationQuestionType.rampWidth,
                         ),
                         const SizedBox(height: 12),
                         _buildValidationQuestion(
-                          question: '¿Hay señalización táctil?',
-                          currentVotes: 2,
-                          totalVotes: 10,
+                          question: '¿La pendiente de la rampa es adecuada?',
+                          questionType: ValidationQuestionType.rampSlope,
                         ),
                       ],
                     ),
@@ -598,9 +635,22 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
 
   Widget _buildValidationQuestion({
     required String question,
-    required int currentVotes,
-    required int totalVotes,
+    required ValidationQuestionType questionType,
   }) {
+    final validation = _validations?.firstWhere(
+      (v) => v.questionType == questionType,
+      orElse: () => CommunityValidationModel(
+        id: questionType.toString(),
+        markerId: widget.marker.id,
+        questionType: questionType,
+        positiveVotes: 0,
+        negativeVotes: 0,
+        totalVotesNeeded: 10,
+        status: ValidationStatus.pending,
+        votedUserIds: [],
+      ),
+    );
+
     final theme = Theme.of(context);
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
@@ -624,27 +674,27 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
               icon: Icons.check_circle,
               label: 'Sí',
               color: Colors.green,
-              onTap: () {},
+              onTap: () => _handleVote(questionType, true),
             ),
             _buildVoteButton(
               icon: Icons.cancel,
               label: 'No',
               color: Colors.red,
-              onTap: () {},
+              onTap: () => _handleVote(questionType, false),
             ),
           ],
         ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
-          value: currentVotes / totalVotes,
+          value: validation?.getProgress() ?? 0,
           backgroundColor: Colors.grey[200],
           valueColor: AlwaysStoppedAnimation<Color>(
-            (currentVotes / totalVotes) >= 0.7 ? Colors.green : Colors.orange,
+            (validation?.getProgress() ?? 0) >= 0.7 ? Colors.green : Colors.orange,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          '$currentVotes de $totalVotes votos necesarios para verificación',
+          '${validation?.positiveVotes ?? 0} de ${validation?.totalVotesNeeded ?? 10} votos necesarios para verificación',
           style: TextStyle(
             fontSize: 12,
             color: textColor.withOpacity(0.5),
@@ -652,5 +702,39 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         ),
       ],
     );
+  }
+
+  Future<void> _handleVote(ValidationQuestionType questionType, bool isPositive) async {
+    try {
+      final result = await _validationService.addVote(
+        widget.marker.id,
+        questionType,
+        isPositive,
+        'current_user_id', // TODO: Reemplazar con ID de usuario real
+      );
+
+      result.fold(
+        (success) {
+          setState(() {
+            _validations = _validations?.map((v) => 
+              v.questionType == questionType ? success : v
+            ).toList() ?? [success];
+          });
+        },
+        (failure) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(failure.toString())),
+            );
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
   }
 } 

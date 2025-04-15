@@ -20,10 +20,7 @@ _CommunityValidationModel _$CommunityValidationModelFromJson(
   totalVotesNeeded: (json['totalVotesNeeded'] as num).toInt(),
   status: $enumDecode(_$ValidationStatusEnumMap, json['status']),
   votedUserIds:
-      (json['votedUserIds'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList() ??
-      const [],
+      (json['votedUserIds'] as List<dynamic>).map((e) => e as String).toList(),
 );
 
 Map<String, dynamic> _$CommunityValidationModelToJson(
@@ -40,14 +37,20 @@ Map<String, dynamic> _$CommunityValidationModelToJson(
 };
 
 const _$ValidationQuestionTypeEnumMap = {
-  ValidationQuestionType.ramps: 'ramps',
-  ValidationQuestionType.adaptedBathrooms: 'adaptedBathrooms',
-  ValidationQuestionType.accessibleElevators: 'accessibleElevators',
-  ValidationQuestionType.tactileSignage: 'tactileSignage',
+  ValidationQuestionType.rampExists: 'ramp_exists',
+  ValidationQuestionType.rampCondition: 'ramp_condition',
+  ValidationQuestionType.rampWidth: 'ramp_width',
+  ValidationQuestionType.rampSlope: 'ramp_slope',
+  ValidationQuestionType.rampHandrails: 'ramp_handrails',
+  ValidationQuestionType.rampLanding: 'ramp_landing',
+  ValidationQuestionType.rampObstacles: 'ramp_obstacles',
+  ValidationQuestionType.rampSurface: 'ramp_surface',
+  ValidationQuestionType.rampVisibility: 'ramp_visibility',
+  ValidationQuestionType.rampMaintenance: 'ramp_maintenance',
 };
 
 const _$ValidationStatusEnumMap = {
   ValidationStatus.pending: 'pending',
-  ValidationStatus.verified: 'verified',
-  ValidationStatus.refuted: 'refuted',
+  ValidationStatus.validated: 'validated',
+  ValidationStatus.rejected: 'rejected',
 };

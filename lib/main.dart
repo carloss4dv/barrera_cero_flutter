@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import 'features/accessibility/infrastructure/providers/accessibility_providers.dart';
+import 'features/accessibility/infrastructure/dependency_injection.dart';
 import 'features/map/infrastructure/di/map_dependencies.dart';
 import 'features/map/presentation/pages/map_page.dart';
 import 'features/accessibility/presentation/providers/accessibility_provider.dart';
@@ -25,7 +25,7 @@ final getIt = GetIt.instance;
 void setupDependencies() {
   // Registrar dependencias por características
   registerMapDependencies(getIt);
-  registerAccessibilityProviders(); // Registrar proveedores de accesibilidad
+  configureAccessibilityDependencies(); // Registrar servicios de accesibilidad
   getIt.registerSingleton<AuthService>(authService); // Use the global singleton instance directly
 }
 

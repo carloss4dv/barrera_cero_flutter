@@ -8,17 +8,17 @@ class MockCommunityValidationService implements ICommunityValidationService {
       CommunityValidationModel(
         id: '1',
         markerId: 'marker1',
-        questionType: ValidationQuestionType.ramps,
+        questionType: ValidationQuestionType.rampExists,
         positiveVotes: 8,
         negativeVotes: 2,
         totalVotesNeeded: 10,
-        status: ValidationStatus.verified,
+        status: ValidationStatus.validated,
         votedUserIds: ['user1', 'user2', 'user3', 'user4', 'user5', 'user6', 'user7', 'user8', 'user9', 'user10'],
       ),
       CommunityValidationModel(
         id: '2',
         markerId: 'marker1',
-        questionType: ValidationQuestionType.adaptedBathrooms,
+        questionType: ValidationQuestionType.rampCondition,
         positiveVotes: 5,
         negativeVotes: 2,
         totalVotesNeeded: 10,
@@ -28,7 +28,7 @@ class MockCommunityValidationService implements ICommunityValidationService {
       CommunityValidationModel(
         id: '3',
         markerId: 'marker1',
-        questionType: ValidationQuestionType.accessibleElevators,
+        questionType: ValidationQuestionType.rampWidth,
         positiveVotes: 3,
         negativeVotes: 4,
         totalVotesNeeded: 10,
@@ -38,7 +38,7 @@ class MockCommunityValidationService implements ICommunityValidationService {
       CommunityValidationModel(
         id: '4',
         markerId: 'marker1',
-        questionType: ValidationQuestionType.tactileSignage,
+        questionType: ValidationQuestionType.rampSlope,
         positiveVotes: 2,
         negativeVotes: 1,
         totalVotesNeeded: 10,
@@ -49,7 +49,7 @@ class MockCommunityValidationService implements ICommunityValidationService {
   };
 
   @override
-  Future<Result<List<CommunityValidationModel>, Exception>> getValidationsForMarker(String markerId) async {
+  Future<ResultDart<List<CommunityValidationModel>, Exception>> getValidationsForMarker(String markerId) async {
     try {
       final validations = _mockData[markerId] ?? [];
       return Success(validations);
@@ -59,7 +59,7 @@ class MockCommunityValidationService implements ICommunityValidationService {
   }
 
   @override
-  Future<Result<CommunityValidationModel, Exception>> addVote(
+  Future<ResultDart<CommunityValidationModel, Exception>> addVote(
     String markerId,
     ValidationQuestionType questionType,
     bool isPositive,
@@ -98,7 +98,7 @@ class MockCommunityValidationService implements ICommunityValidationService {
   }
 
   @override
-  Future<Result<CommunityValidationModel, Exception>> createValidation(
+  Future<ResultDart<CommunityValidationModel, Exception>> createValidation(
     String markerId,
     ValidationQuestionType questionType,
   ) async {
@@ -117,6 +117,7 @@ class MockCommunityValidationService implements ICommunityValidationService {
         negativeVotes: 0,
         totalVotesNeeded: 10,
         status: ValidationStatus.pending,
+        votedUserIds: [],
       );
 
       validations.add(newValidation);
@@ -136,11 +137,9 @@ class MockCommunityValidationService implements ICommunityValidationService {
     
     final positivePercentage = positiveVotes / totalVotes;
     if (positivePercentage >= 0.7) {
-      return ValidationStatus.verified;
-    } else if (positivePercentage <= 0.3) {
-      return ValidationStatus.refuted;
+      return ValidationStatus.validated;
+    } else {
+      return ValidationStatus.rejected;
     }
-    
-    return ValidationStatus.pending;
   }
 } 

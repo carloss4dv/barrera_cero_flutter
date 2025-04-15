@@ -86,8 +86,8 @@ as List<String>,
 /// @nodoc
 @JsonSerializable()
 
-class _CommunityValidationModel implements CommunityValidationModel {
-  const _CommunityValidationModel({required this.id, required this.markerId, required this.questionType, required this.positiveVotes, required this.negativeVotes, required this.totalVotesNeeded, required this.status, final  List<String> votedUserIds = const []}): _votedUserIds = votedUserIds;
+class _CommunityValidationModel extends CommunityValidationModel {
+  const _CommunityValidationModel({required this.id, required this.markerId, required this.questionType, required this.positiveVotes, required this.negativeVotes, required this.totalVotesNeeded, required this.status, required final  List<String> votedUserIds}): _votedUserIds = votedUserIds,super._();
   factory _CommunityValidationModel.fromJson(Map<String, dynamic> json) => _$CommunityValidationModelFromJson(json);
 
 @override final  String id;
@@ -98,7 +98,7 @@ class _CommunityValidationModel implements CommunityValidationModel {
 @override final  int totalVotesNeeded;
 @override final  ValidationStatus status;
  final  List<String> _votedUserIds;
-@override@JsonKey() List<String> get votedUserIds {
+@override List<String> get votedUserIds {
   if (_votedUserIds is EqualUnmodifiableListView) return _votedUserIds;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_votedUserIds);
