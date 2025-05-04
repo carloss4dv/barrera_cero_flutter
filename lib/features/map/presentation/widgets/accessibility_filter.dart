@@ -68,10 +68,10 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Barra de búsqueda y usuario
+        // Barra de usuario y niveles de accesibilidad
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(24),
@@ -87,206 +87,172 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                 : null,
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search, size: 20, color: textColor),
-              const SizedBox(width: 8),
               Expanded(
-                child: TextField(
-                  style: TextStyle(color: textColor),
-                  decoration: InputDecoration(
-                    hintText: 'Buscar',
-                    hintStyle: TextStyle(color: textColor.withOpacity(0.7)),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildAccessibilityLevelChip(
+                        label: 'Todos',
+                        value: 0,
+                        color: Colors.grey.shade700,
+                        isSelected: _selectedLevel == 0,
+                        onTap: () => _updateSelectedLevel(0),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildAccessibilityLevelChip(
+                        label: 'Alta',
+                        value: 1,
+                        color: Colors.green.shade600,
+                        isSelected: _selectedLevel == 1,
+                        onTap: () => _updateSelectedLevel(1),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildAccessibilityLevelChip(
+                        label: 'Media',
+                        value: 2,
+                        color: Colors.orange.shade600,
+                        isSelected: _selectedLevel == 2,
+                        onTap: () => _updateSelectedLevel(2),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildAccessibilityLevelChip(
+                        label: 'Baja',
+                        value: 3,
+                        color: Colors.red.shade600,
+                        isSelected: _selectedLevel == 3,
+                        onTap: () => _updateSelectedLevel(3),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                height: 24,
+                width: 1,
+                color: borderColor,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              _buildUserButton(currentUser, accentColor, textColor),
+            ],
+          ),
+        ),
+
+        // Filtros de accesibilidad
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Botón de filtros
+              Container(
                 decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(
-                      color: borderColor,
-                      width: 1,
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor),
+                  boxShadow: [
+                    BoxShadow(
+                      color: shadowColor,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _isMetadataExpanded = !_isMetadataExpanded;
+                    });
+                  },
+                  icon: Icon(
+                    _isMetadataExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: textColor,
+                    size: 18,
+                  ),
+                  label: Text(
+                    'Filtros de accesibilidad',
+                    style: TextStyle(
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),
-                child: _buildUserButton(currentUser, accentColor, textColor),
               ),
-            ],
-          ),
-        ),
-
-        // Filtro de nivel de accesibilidad
-        Container(
-          margin: const EdgeInsets.only(left: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            border: isHighContrastMode 
-                ? Border.all(color: AccessibilityProvider.kButtonColor, width: 1.5)
-                : null,
-          ),
-          child: DropdownButton<int>(
-            value: _selectedLevel,
-            underline: const SizedBox(),
-            isDense: true,
-            dropdownColor: backgroundColor,
-            style: TextStyle(color: textColor),
-            icon: Icon(Icons.keyboard_arrow_down, color: textColor),
-            items: [
-              DropdownMenuItem(
-                value: 0,
-                child: Text('Nivel de accesibilidad', style: TextStyle(color: textColor)),
-              ),
-              DropdownMenuItem(
-                value: 1,
-                child: Text('Alta accesibilidad', style: TextStyle(color: textColor)),
-              ),
-              DropdownMenuItem(
-                value: 2,
-                child: Text('Media accesibilidad', style: TextStyle(color: textColor)),
-              ),
-              DropdownMenuItem(
-                value: 3,
-                child: Text('Baja accesibilidad', style: TextStyle(color: textColor)),
-              ),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                setState(() {
-                  _selectedLevel = value;
-                });
-                context.read<MapFiltersProvider>().updateAccessibilityLevel(value);
-              }
-            },
-          ),
-        ),
-
-        // Filtros de metadatos
-        Container(
-          margin: const EdgeInsets.only(left: 16),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-            border: isHighContrastMode 
-                ? Border.all(color: AccessibilityProvider.kButtonColor, width: 1.5)
-                : null,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _isMetadataExpanded = !_isMetadataExpanded;
-                  });
-                },
-                icon: Icon(
-                  _isMetadataExpanded ? Icons.expand_less : Icons.expand_more,
-                  color: textColor,
-                ),
-                label: Text(
-                  'Filtros de Accesibilidad',
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              
+              // Panel de filtros
               if (_isMetadataExpanded)
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  margin: const EdgeInsets.only(top: 8),
+                  // Sin fondo ni borde, solo los botones
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _buildFilterChip(
-                            label: 'Rampa',
-                            value: 'hasRamp',
-                            icon: Icons.accessible,
-                            isHighContrastMode: isHighContrastMode,
-                            textColor: textColor,
-                          ),
-                          _buildFilterChip(
-                            label: 'Ascensor',
-                            value: 'hasElevator',
-                            icon: Icons.elevator,
-                            isHighContrastMode: isHighContrastMode,
-                            textColor: textColor,
-                          ),
-                          _buildFilterChip(
-                            label: 'Baño Accesible',
-                            value: 'hasAccessibleBathroom',
-                            icon: Icons.wc,
-                            isHighContrastMode: isHighContrastMode,
-                            textColor: textColor,
-                          ),
-                          _buildFilterChip(
-                            label: 'Señalización Braille',
-                            value: 'hasBrailleSignage',
-                            icon: Icons.format_size,
-                            isHighContrastMode: isHighContrastMode,
-                            textColor: textColor,
-                          ),
-                          _buildFilterChip(
-                            label: 'Guía de Audio',
-                            value: 'hasAudioGuidance',
-                            icon: Icons.hearing,
-                            isHighContrastMode: isHighContrastMode,
-                            textColor: textColor,
-                          ),
-                          _buildFilterChip(
-                            label: 'Pavimento Táctil',
-                            value: 'hasTactilePavement',
-                            icon: Icons.texture,
-                            isHighContrastMode: isHighContrastMode,
-                            textColor: textColor,
-                          ),
-                        ],
+                      _buildVerticalFilterButton(
+                        label: 'Rampa',
+                        value: 'hasRamp',
+                        icon: Icons.accessible,
+                        isSelected: _metadataFilters['hasRamp'] ?? false,
+                        onTap: () => _toggleFilter('hasRamp'),
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                for (var key in _metadataFilters.keys) {
-                                  _metadataFilters[key] = false;
-                                }
-                              });
-                              context.read<MapFiltersProvider>().updateFilters(_metadataFilters);
-                            },
-                            child: Text(
-                              'Limpiar Filtros',
-                              style: TextStyle(color: textColor),
-                            ),
-                          ),
-                        ],
+                      _buildVerticalFilterButton(
+                        label: 'Ascensor',
+                        value: 'hasElevator',
+                        icon: Icons.elevator,
+                        isSelected: _metadataFilters['hasElevator'] ?? false,
+                        onTap: () => _toggleFilter('hasElevator'),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildVerticalFilterButton(
+                        label: 'Baño Accesible',
+                        value: 'hasAccessibleBathroom',
+                        icon: Icons.wc,
+                        isSelected: _metadataFilters['hasAccessibleBathroom'] ?? false,
+                        onTap: () => _toggleFilter('hasAccessibleBathroom'),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildVerticalFilterButton(
+                        label: 'Señalización Braille',
+                        value: 'hasBrailleSignage',
+                        icon: Icons.format_size,
+                        isSelected: _metadataFilters['hasBrailleSignage'] ?? false,
+                        onTap: () => _toggleFilter('hasBrailleSignage'),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildVerticalFilterButton(
+                        label: 'Guía de Audio',
+                        value: 'hasAudioGuidance',
+                        icon: Icons.hearing,
+                        isSelected: _metadataFilters['hasAudioGuidance'] ?? false,
+                        onTap: () => _toggleFilter('hasAudioGuidance'),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildVerticalFilterButton(
+                        label: 'Pavimento Táctil',
+                        value: 'hasTactilePavement',
+                        icon: Icons.texture,
+                        isSelected: _metadataFilters['hasTactilePavement'] ?? false,
+                        onTap: () => _toggleFilter('hasTactilePavement'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildVerticalClearButton(
+                        label: 'Limpiar Filtros',
+                        onTap: () {
+                          setState(() {
+                            for (var key in _metadataFilters.keys) {
+                              _metadataFilters[key] = false;
+                            }
+                          });
+                          context.read<MapFiltersProvider>().updateFilters(_metadataFilters);
+                        },
                       ),
                     ],
                   ),
@@ -298,79 +264,226 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
     );
   }
 
-  Widget _buildUserButton(User? currentUser, Color accentColor, Color textColor) {
-    if (currentUser != null) {
-      final displayName = currentUser.displayName ?? currentUser.email ?? 'Usuario';
-      return TextButton(
-        onPressed: () {
-          Navigator.of(context).pushNamed('/profile', arguments: currentUser.uid);
-        },
+  void _updateSelectedLevel(int level) {
+    setState(() {
+      _selectedLevel = level;
+    });
+    context.read<MapFiltersProvider>().updateAccessibilityLevel(level);
+  }
+
+  Widget _buildAccessibilityLevelChip({
+    required String label,
+    required int value,
+    required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.3) : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? color : Colors.grey.withOpacity(0.3),
+            width: 1.5,
+          ),
+        ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.person,
-              color: accentColor,
-              size: 16,
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? color : Colors.grey.withOpacity(0.3),
+                  width: 1.5,
+                ),
+              ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 8),
             Text(
-              displayName,
+              label,
               style: TextStyle(
-                color: accentColor,
-                fontWeight: FontWeight.bold,
+                color: isSelected ? color : Colors.grey.shade700,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 13,
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildUserButton(User? currentUser, Color accentColor, Color textColor) {
+    if (currentUser != null) {
+      final displayName = currentUser.displayName ?? currentUser.email ?? 'Usuario';
+      return InkWell(
+        onTap: () {
+          Navigator.of(context).pushNamed('/profile', arguments: currentUser.uid);
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: accentColor.withOpacity(0.1),
+                child: Icon(
+                  Icons.person,
+                  color: accentColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                displayName,
+                style: TextStyle(
+                  color: accentColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     } else {
-      return TextButton(
+      return ElevatedButton.icon(
         onPressed: () {
           Navigator.of(context).pushNamed('/login');
         },
-        child: Text(
+        icon: const Icon(Icons.login, size: 18),
+        label: const Text(
           'Iniciar sesión',
           style: TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
           ),
         ),
       );
     }
   }
 
-  Widget _buildFilterChip({
+  void _toggleFilter(String key) {
+    setState(() {
+      _metadataFilters[key] = !(_metadataFilters[key] ?? false);
+    });
+    context.read<MapFiltersProvider>().updateFilters(_metadataFilters);
+  }
+
+  Widget _buildVerticalFilterButton({
     required String label,
     required String value,
     required IconData icon,
-    required bool isHighContrastMode,
-    required Color textColor,
+    required bool isSelected,
+    required VoidCallback onTap,
   }) {
-    final Color backgroundColor = isHighContrastMode 
+    final theme = Theme.of(context);
+    final Color backgroundColor = isSelected 
+        ? Colors.black
+        : Colors.white;
+    final Color textColor = isSelected 
         ? Colors.white
-        : Colors.grey.shade200;
-    final Color selectedColor = isHighContrastMode 
-        ? AccessibilityProvider.kAccentColor
-        : Colors.blue;
+        : Colors.black;
+    final Color iconColor = isSelected 
+        ? Colors.white
+        : Colors.black;
+    final Color borderColor = isSelected
+        ? Colors.black
+        : Colors.grey.withOpacity(0.3);
 
-    return FilterChip(
-      label: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: textColor),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(color: textColor)),
-        ],
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(32),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: borderColor, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: iconColor, size: 22),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
       ),
-      selected: _metadataFilters[value] ?? false,
-      backgroundColor: backgroundColor,
-      selectedColor: selectedColor,
-      onSelected: (bool selected) {
-        setState(() {
-          _metadataFilters[value] = selected;
-        });
-        context.read<MapFiltersProvider>().updateFilters(_metadataFilters);
-      },
+    );
+  }
+
+  Widget _buildVerticalClearButton({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(32),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.black, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.07),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.clear, color: Colors.black, size: 22),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 } 

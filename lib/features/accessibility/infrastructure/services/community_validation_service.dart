@@ -76,7 +76,7 @@ class CommunityValidationService implements ICommunityValidationService {
             final positiveRatio = validation.positiveVotes / totalVotes;
             validation = validation.copyWith(
               status: positiveRatio >= 0.7 
-                ? ValidationStatus.validated 
+                ? ValidationStatus.approved 
                 : ValidationStatus.rejected,
             );
           }

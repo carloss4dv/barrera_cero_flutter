@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'accessibility_level.dart';
 
 part 'accessibility_report_model.freezed.dart';
 

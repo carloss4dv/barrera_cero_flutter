@@ -74,25 +74,11 @@ class RouteService {
       // Convertir las coordenadas a segmentos de ruta
       final segments = await _createRouteSegments(route);
 
-      // Filtrar segmentos según criterios de accesibilidad
-      final accessibleSegments = segments.where((segment) => 
-        segment.isAccessible(
-          avoidStairs: avoidStairs,
-          preferRamps: preferRamps,
-        )
-      ).toList();
+      // Convertir los segmentos a coordenadas, manteniendo todos los segmentos
+      final allCoordinates = _segmentsToCoordinates(segments);
+      print('Ruta generada con ${allCoordinates.length} puntos');
 
-      // Si no hay segmentos accesibles, devolver la ruta original
-      if (accessibleSegments.isEmpty) {
-        print('No se encontraron segmentos accesibles, usando ruta original');
-        return Success(route);
-      }
-
-      // Convertir los segmentos accesibles a coordenadas
-      final accessibleCoordinates = _segmentsToCoordinates(accessibleSegments);
-      print('Ruta adaptada generada con ${accessibleCoordinates.length} puntos');
-
-      return Success(accessibleCoordinates);
+      return Success(allCoordinates);
     } catch (e) {
       print('Error al obtener la ruta: $e');
       if (e.toString().contains('API key')) {

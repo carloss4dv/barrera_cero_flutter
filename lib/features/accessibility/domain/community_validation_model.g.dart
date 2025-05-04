@@ -47,10 +47,14 @@ const _$ValidationQuestionTypeEnumMap = {
   ValidationQuestionType.rampSurface: 'ramp_surface',
   ValidationQuestionType.rampVisibility: 'ramp_visibility',
   ValidationQuestionType.rampMaintenance: 'ramp_maintenance',
+  ValidationQuestionType.stairsExist: 'stairs_exist',
+  ValidationQuestionType.slope: 'slope',
+  ValidationQuestionType.surfaceType: 'surface_type',
 };
 
 const _$ValidationStatusEnumMap = {
   ValidationStatus.pending: 'pending',
-  ValidationStatus.validated: 'validated',
+  ValidationStatus.approved: 'approved',
   ValidationStatus.rejected: 'rejected',
+  ValidationStatus.validated: 'validated',
 };

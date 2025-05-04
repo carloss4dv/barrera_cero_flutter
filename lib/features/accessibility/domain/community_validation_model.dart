@@ -1,8 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'accessibility_report_model.dart';
 
 part 'community_validation_model.freezed.dart';
 part 'community_validation_model.g.dart';
 
+/// Enum que representa los tipos de preguntas de validación
 enum ValidationQuestionType {
   @JsonValue('ramp_exists')
   rampExists,
@@ -23,16 +25,25 @@ enum ValidationQuestionType {
   @JsonValue('ramp_visibility')
   rampVisibility,
   @JsonValue('ramp_maintenance')
-  rampMaintenance
+  rampMaintenance,
+  @JsonValue('stairs_exist')
+  stairsExist,
+  @JsonValue('slope')
+  slope,
+  @JsonValue('surface_type')
+  surfaceType,
 }
 
+/// Enum que representa el estado de una validación
 enum ValidationStatus {
   @JsonValue('pending')
   pending,
+  @JsonValue('approved')
+  approved,
+  @JsonValue('rejected')
+  rejected,
   @JsonValue('validated')
   validated,
-  @JsonValue('rejected')
-  rejected
 }
 
 @freezed
@@ -81,7 +92,7 @@ class CommunityValidationModel with _$CommunityValidationModel {
   Map<String, dynamic> toJson() => _$CommunityValidationModelToJson(this as _CommunityValidationModel);
 
   bool isPending() => status == ValidationStatus.pending;
-  bool isValidated() => status == ValidationStatus.validated;
+  bool isValidated() => status == ValidationStatus.approved;
   bool isRejected() => status == ValidationStatus.rejected;
 
   double getProgress() {
@@ -111,6 +122,12 @@ class CommunityValidationModel with _$CommunityValidationModel {
         return '¿La rampa es visible y accesible?';
       case ValidationQuestionType.rampMaintenance:
         return '¿La rampa está bien mantenida?';
+      case ValidationQuestionType.stairsExist:
+        return '¿Existe una escalera en este lugar?';
+      case ValidationQuestionType.slope:
+        return '¿La pendiente de la rampa es adecuada?';
+      case ValidationQuestionType.surfaceType:
+        return '¿El tipo de superficie de la rampa es adecuado?';
     }
   }
 } 

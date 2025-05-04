@@ -7,11 +7,13 @@ import 'package:provider/provider.dart';
 import '../../application/marker_cubit.dart';
 import '../../application/marker_state.dart';
 import '../../domain/marker_model.dart';
+import '../../domain/route_segment_model.dart';
 import '../widgets/accessibility_filter.dart';
 import '../widgets/custom_map_marker.dart';
 import '../widgets/marker_detail_card.dart';
 import '../../../accessibility/presentation/pages/accessibility_settings_page.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
+import '../../../accessibility/domain/accessibility_level.dart';
 import '../../../challenges/presentation/widgets/challenges_panel.dart';
 import '../../../../main.dart';
 import '../../infrastructure/providers/map_filters_provider.dart';
@@ -92,6 +94,7 @@ class MapView extends StatelessWidget {
                           points: state.route!,
                           color: isHighContrastMode ? Colors.yellow : Colors.blue,
                           strokeWidth: 4,
+                          gradientColors: _getRouteGradientColors(context, state.route!, isHighContrastMode),
                         ),
                       ],
                     ),
@@ -282,6 +285,49 @@ class MapView extends StatelessWidget {
                   );
                 },
               ),
+
+              // Indicador de carga para la ruta
+              if (state.isLoadingRoute)
+                Container(
+                  color: Colors.black54,
+                  child: Center(
+                    child: Card(
+                      color: isHighContrastMode 
+                          ? AccessibilityProvider.kButtonColor 
+                          : Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                isHighContrastMode ? Colors.black : Colors.blue,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Generando ruta accesible...',
+                              style: TextStyle(
+                                color: isHighContrastMode ? Colors.black : Colors.black87,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Esto puede tardar unos segundos',
+                              style: TextStyle(
+                                color: isHighContrastMode ? Colors.black : Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
           );
         },
@@ -343,5 +389,52 @@ class MapView extends StatelessWidget {
     
     print('Total de marcadores construidos: ${markers.length}');
     return markers;
+  }
+
+  List<Color> _getRouteGradientColors(BuildContext context, List<LatLng> route, bool isHighContrastMode) {
+    final colors = <Color>[];
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    
+    // Para cada punto de la ruta
+    for (int i = 0; i < route.length; i++) {
+      // Si no es el último punto, evaluar el segmento
+      if (i < route.length - 1) {
+        final start = route[i];
+        final end = route[i + 1];
+        
+        // Crear un segmento temporal para evaluar su accesibilidad
+        final segment = RouteSegment(
+          start: start,
+          end: end,
+          distance: const Distance().as(LengthUnit.Meter, start, end),
+        );
+        
+        // Obtener el nivel de accesibilidad del segmento
+        final level = segment.getAccessibilityLevel(
+          avoidStairs: true,
+          preferRamps: true,
+        );
+        
+        // Asignar color según el nivel de accesibilidad
+        final Color segmentColor = switch (level) {
+          AccessibilityLevel.good => isHighContrastMode 
+              ? const Color(0xFF4CAF50) // Verde brillante
+              : Colors.green,
+          AccessibilityLevel.medium => isHighContrastMode 
+              ? const Color(0xFFFFD600) // Ámbar brillante
+              : Colors.amber,
+          AccessibilityLevel.bad => isHighContrastMode 
+              ? const Color(0xFFFF5252) // Rojo brillante
+              : Colors.red,
+        };
+        
+        colors.add(segmentColor);
+      } else {
+        // Para el último punto, usar el mismo color que el último segmento
+        colors.add(colors.last);
+      }
+    }
+    
+    return colors;
   }
 } 

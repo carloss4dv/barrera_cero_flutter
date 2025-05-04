@@ -84,131 +84,122 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Blurred background
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(
-              color: Colors.black.withOpacity(0.3),
-            ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              theme.colorScheme.primary.withOpacity(0.1),
+              theme.colorScheme.background,
+            ],
           ),
-          // Login content
-          Center(
-            child: Card(
-              color: Colors.white,
-              margin: const EdgeInsets.all(20),
-              elevation: 8,
-              child: Stack(
-                children: [
-                  // Close button
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.black, size: 24),
-                      onPressed: () => Navigator.of(context).pushReplacementNamed('/'),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Logo y título
+                    Icon(
+                      Icons.accessible_forward,
+                      size: 64,
+                      color: theme.colorScheme.primary,
                     ),
-                  ),
-                  // Content
-                  Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'Iniciar Sesión',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                            TextFormField(
-                              controller: _emailController,
-                              style: const TextStyle(color: Colors.black),
-                              decoration: InputDecoration(
-                                labelText: 'Correo electrónico',
-                                labelStyle: const TextStyle(color: Colors.black),
-                                prefixIcon: const Icon(Icons.email_outlined, color: Colors.black),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Barrera Cero',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Inicia sesión para continuar',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onBackground.withOpacity(0.7),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    
+                    // Formulario
+                    Card(
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: theme.colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              TextFormField(
+                                controller: _emailController,
+                                decoration: InputDecoration(
+                                  labelText: 'Correo electrónico',
+                                  prefixIcon: const Icon(Icons.email_outlined),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                fillColor: Colors.white,
-                                filled: true,
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor, ingresa tu correo electrónico';
+                                  }
+                                  return null;
+                                },
                               ),
-                              onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Por favor, ingresa tu correo electrónico';
-                                }
-                                if (!value.contains('@')) {
-                                  return 'Por favor, ingresa un correo electrónico válido';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 20),
-                            TextFormField(
-                              controller: _passwordController,
-                              style: const TextStyle(color: Colors.black),
-                              obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: 'Contraseña',
-                                labelStyle: const TextStyle(color: Colors.black),
-                                prefixIcon: const Icon(Icons.lock_outline, color: Colors.black),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                controller: _passwordController,
+                                decoration: InputDecoration(
+                                  labelText: 'Contraseña',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                                fillColor: Colors.white,
-                                filled: true,
+                                obscureText: true,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor, ingresa tu contraseña';
+                                  }
+                                  return null;
+                                },
                               ),
-                              onFieldSubmitted: (_) => _handleLogin(),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Por favor, ingresa tu contraseña';
-                                }
-                                if (value.length < 6) {
-                                  return 'La contraseña debe tener al menos 6 caracteres';
-                                }
-                                return null;
-                              },
-                            ),
-                            if (_errorMessage != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: Text(
-                                  _errorMessage!,
-                                  style: const TextStyle(color: Colors.red),
+                              const SizedBox(height: 24),
+                              if (_errorMessage != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.error,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
-                              ),
-                            const SizedBox(height: 10),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: _handleResetPassword,
-                                child: const Text(
-                                  '¿Olvidaste tu contraseña?',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 50,
-                              child: ElevatedButton(
+                              ElevatedButton(
                                 onPressed: _isLoading ? null : _handleLogin,
                                 style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  backgroundColor: Colors.black,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -230,36 +221,43 @@ class _LoginPageState extends State<LoginPage> {
                                         ),
                                       ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  '¿No tienes una cuenta?',
-                                  style: TextStyle(color: Colors.black),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pushReplacementNamed('/register');
-                                  },
-                                  child: const Text(
-                                    'Regístrate',
-                                    style: TextStyle(color: Colors.black),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                              const SizedBox(height: 16),
+                              TextButton(
+                                onPressed: _handleResetPassword,
+                                child: const Text('¿Olvidaste tu contraseña?'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Botón de registro
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '¿No tienes una cuenta?',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onBackground.withOpacity(0.7),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pushNamed('/register');
+                          },
+                          child: const Text('Regístrate'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
