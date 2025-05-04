@@ -13,8 +13,7 @@ Este estudio tiene como objetivo evaluar la usabilidad y experiencia de usuario 
 ### Descripción del Proceso
 1. Se le pedirá que complete una serie de tareas en la aplicación
 2. Deberá verbalizar sus pensamientos mientras interactúa con la aplicación
-3. La sesión será grabada (audio/video) para su posterior análisis
-4. La duración aproximada es de 45 minutos
+3. La duración aproximada es de 45 minutos
 
 ### Confidencialidad
 - Toda la información recopilada será confidencial
