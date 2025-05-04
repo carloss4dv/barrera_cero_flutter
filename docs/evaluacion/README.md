@@ -13,7 +13,6 @@ Evaluar la usabilidad y experiencia de usuario de la aplicación mediante la obs
 - Guión de tareas para los usuarios
 - Formulario de consentimiento
 - Formulario de evaluación post-tarea
-- Equipo de grabación (opcional)
 - Cronómetro
 
 ### Selección de Participantes
