@@ -4,7 +4,6 @@
 
 ### 1. Guías de Evaluación
 - [Tareas de Evaluación](tareas_evaluacion.md) - Lista detallada de tareas y escenarios para evaluar la aplicación
-- [Perfiles de Usuarios](perfiles_usuarios.md) - Descripción de los diferentes perfiles de usuarios para la evaluación
 
 ### 2. Formularios
 - [Formulario de Consentimiento](formulario_consentimiento.md) - Documento legal para obtener el consentimiento de los participantes
