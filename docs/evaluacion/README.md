@@ -39,14 +39,14 @@ Los usuarios deberán completar las siguientes tareas mientras verbalizan sus pe
    - Explorar las opciones de accesibilidad
 
 2. Uso básico
-   - Navegar por las diferentes secciones
-   - Probar las funcionalidades principales
-   - Utilizar las herramientas de accesibilidad
+   - Navegar por el mapa interactivo
+   - Explorar los marcadores de accesibilidad
+   - Probar las funciones de filtrado
 
 3. Escenarios específicos
-   - Simular situaciones de emergencia
-   - Probar la personalización de alertas
-   - Explorar las opciones de ayuda
+   - Crear un reporte de accesibilidad
+   - Planificar una ruta accesible
+   - Participar en el foro de discusión
 
 ### 3. Durante la Evaluación
 - Anotar observaciones sobre:

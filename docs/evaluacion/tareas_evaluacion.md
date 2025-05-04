@@ -25,41 +25,41 @@
 - Probar la navegación entre diferentes pantallas
 - Verificar la consistencia de la interfaz
 
-### Subtarea 2.2: Gestión del Mapa
-- Explorar el mapa interactivo
-- Identificar diferentes tipos de marcadores
-- Probar las funciones de zoom y desplazamiento
-- Verificar la visualización de la ubicación actual
+### Subtarea 2.2: Gestión de Reportes
+- Crear un nuevo reporte de accesibilidad
+- Seleccionar el tipo de barrera encontrada
+- Añadir detalles y comentarios
+- Subir fotos del lugar (opcional)
 
 ### Subtarea 2.3: Personalización
 - Modificar la configuración de visualización del mapa
-- Ajustar las preferencias de accesibilidad
-- Personalizar la información mostrada
+- Ajustar las preferencias de filtros
+- Personalizar la vista de marcadores
 - Guardar los cambios realizados
 
 ## Tarea 3: Escenarios de Uso (20 minutos)
 
-### Subtarea 3.1: Reportes de Accesibilidad
-- Crear un nuevo reporte de accesibilidad
-- Seleccionar el nivel de accesibilidad (bueno, medio, malo)
-- Añadir detalles y comentarios
-- Publicar el reporte
-
-### Subtarea 3.2: Exploración de Lugares
-- Buscar lugares específicos en el mapa
+### Subtarea 3.1: Exploración del Mapa
+- Navegar por el mapa interactivo
+- Identificar diferentes tipos de marcadores
 - Filtrar por nivel de accesibilidad
-- Revisar los reportes existentes
-- Evaluar la información disponible
+- Buscar ubicaciones específicas
+
+### Subtarea 3.2: Gestión de Rutas
+- Planificar una ruta accesible
+- Verificar los puntos de interés accesibles
+- Probar la navegación paso a paso
+- Evaluar las alternativas de ruta
 
 ### Subtarea 3.3: Participación en el Foro
-- Acceder a la sección del foro
-- Revisar las discusiones existentes
-- Crear una nueva publicación
+- Crear un nuevo tema de discusión
+- Responder a publicaciones existentes
+- Compartir experiencias de accesibilidad
 - Interactuar con otros usuarios
 
 ## Tarea 4: Funciones Avanzadas (15 minutos)
 
-### Subtarea 4.1: Gestión de Reportes
+### Subtarea 4.1: Reportes Detallados
 - Generar un reporte de accesibilidad
 - Exportar los datos en diferentes formatos
 - Revisar el historial de reportes

@@ -20,7 +20,8 @@ Por favor, califique su experiencia en una escala del 1 al 5, donde:
 
 ### Funcionalidad
 - ¿Qué tan efectivas fueron las herramientas de accesibilidad? [1-5]
-- ¿Qué tan bien funcionaron las características de personalización? [1-5]
+- ¿Qué tan bien funcionó el sistema de reportes? [1-5]
+- ¿Qué tan útil encontró el mapa interactivo? [1-5]
 
 ### Experiencia General
 - ¿Qué tan satisfecho está con la experiencia general? [1-5]
@@ -51,10 +52,13 @@ Por favor, califique su experiencia en una escala del 1 al 5, donde:
    ________________________________________________
 
 ## Escenarios Específicos
-1. ¿Cómo se sintió al usar las funciones de emergencia?
+1. ¿Cómo se sintió al usar el mapa interactivo?
    ________________________________________________
 
-2. ¿Qué tan efectivas encontró las opciones de personalización?
+2. ¿Qué tan efectivo encontró el sistema de reportes?
+   ________________________________________________
+
+3. ¿Qué opinión tiene sobre el foro de discusión?
    ________________________________________________
 
 ## Comentarios Adicionales
