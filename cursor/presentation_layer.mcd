@@ -1,0 +1,195 @@
+# Presentation Layer Guidelines
+
+## Directory Structure
+
+```
+lib/
+  └── feature_name/
+      └── presentation/
+          ├── feature_page.dart
+          └── widgets/
+              └── feature_widget.dart
+```
+
+## Presentation Layer Conventions
+
+### Page Structure
+
+1. Pages must:
+   - Use BlocProvider for state management
+   - Follow single responsibility principle
+   - Handle all UI states (loading, error, success)
+   - Use proper layout constants from KSizes
+
+2. Page Properties:
+   - Keep state in Cubit
+   - Use proper widget keys for testing
+   - Follow proper lifecycle management
+   - Handle proper error display
+
+### Widget Structure
+
+1. Widgets must:
+   - Be focused on single responsibility
+   - Use KSizes for all measurements
+   - Follow proper widget lifecycle
+   - Be properly documented
+   - Use proper error boundaries
+
+2. Widget Properties:
+   - Use named parameters
+   - Document required parameters
+   - Use proper types
+   - Follow immutability principles
+
+## Naming Conventions
+
+### Files
+
+1. Page files:
+   - Use `_page.dart` suffix
+   - Use snake_case
+   - Be descriptive of content
+
+2. Widget files:
+   - Use `_widget.dart` suffix
+   - Use snake_case
+   - Describe widget purpose
+
+### Classes
+
+1. Page classes:
+   - Use PascalCase
+   - End with 'Page'
+   - Match their file names
+
+2. Widget classes:
+   - Use PascalCase
+   - End with 'Widget' if not obvious
+   - Match their file names
+
+## Code Organization
+
+1. Pages:
+   - One page per file
+   - Include BlocProvider setup
+   - Handle all UI states
+   - Use proper error boundaries
+
+2. Widgets:
+   - Group related widgets in widgets folder
+   - Keep widgets focused and small
+   - Extract reusable components
+   - Document widget purpose
+
+## Best Practices
+
+1. Layout:
+   - Use KSizes for all measurements
+   - Never use hard-coded values
+   - Follow proper spacing guidelines
+   - Use proper widget constraints
+
+2. State Management:
+   - Use BlocBuilder for state consumption
+   - Use BlocListener for side effects
+   - Keep widgets pure
+   - Handle all state cases
+
+3. Error Handling:
+   - Show user-friendly error messages
+   - Provide retry mechanisms
+   - Handle edge cases
+   - Use proper error boundaries
+
+## Code Example
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class FeaturePage extends StatelessWidget {
+  const FeaturePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => FeatureCubit()..initialize(),
+      child: const FeatureView(),
+    );
+  }
+}
+
+class FeatureView extends StatelessWidget {
+  const FeatureView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: EdgeInsets.all(KSize.margin4x),
+        child: BlocBuilder<FeatureCubit, FeatureState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const LoadingWidget();
+            }
+
+            if (state.hasError) {
+              return ErrorWidget(
+                onRetry: () => context.read<FeatureCubit>().initialize(),
+              );
+            }
+
+            return const FeatureContent();
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class FeatureContent extends StatelessWidget {
+  const FeatureContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(height: KSize.margin4x),
+        Text(
+          'Feature Title',
+          style: TextStyle(
+            fontSize: KSize.fontSizeL,
+            fontWeight: KSize.fontWeightBold,
+          ),
+        ),
+        SizedBox(height: KSize.margin2x),
+        const FeatureWidget(),
+      ],
+    );
+  }
+}
+
+class FeatureWidget extends StatelessWidget {
+  const FeatureWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(KSize.margin4x),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(KSize.radiusDefault),
+        color: Theme.of(context).colorScheme.surface,
+      ),
+      child: BlocBuilder<FeatureCubit, FeatureState>(
+        builder: (context, state) {
+          return Column(
+            children: [
+              // Widget content using KSizes for layout
+            ],
+          );
+        },
+      ),
+    );
+  }
+} 

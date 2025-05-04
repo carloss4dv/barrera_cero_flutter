@@ -12,6 +12,7 @@ import 'features/users/presentation/profile_page.dart';
 import 'features/map/infrastructure/providers/map_filters_provider.dart';
 import 'features/forum/presentation/screens/forum_screen.dart';
 import 'features/forum/di/forum_module.dart';
+import 'features/notifications/infrastructure/services/firebase_messaging_service.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -30,6 +31,9 @@ void setupDependencies() {
   configureAccessibilityDependencies(); // Registrar servicios de accesibilidad
   getIt.registerSingleton<AuthService>(authService); // Use the global singleton instance directly
   ForumModule.init(); // Registrar dependencias del foro
+  
+  // Registrar el servicio de notificaciones
+  getIt.registerSingleton<FirebaseMessagingService>(FirebaseMessagingService());
 }
 
 void main() async {
@@ -39,6 +43,11 @@ void main() async {
   );
   await authService.initPrefs(); // Use the public method instead
   setupDependencies();
+  
+  // Inicializar el servicio de notificaciones
+  final messagingService = getIt<FirebaseMessagingService>();
+  await messagingService.initialize();
+  
   runApp(const MyApp());
 }
 
