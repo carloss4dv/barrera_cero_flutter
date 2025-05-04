@@ -18,7 +18,6 @@ Este estudio tiene como objetivo evaluar la usabilidad y experiencia de usuario 
 ### Confidencialidad
 - Toda la información recopilada será confidencial
 - Los datos serán utilizados únicamente con fines de investigación
-- Las grabaciones serán eliminadas después del análisis
 - Su identidad será protegida en cualquier publicación
 
 ### Derechos del Participante
