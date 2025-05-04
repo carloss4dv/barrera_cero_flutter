@@ -40,4 +40,3 @@ Fecha: ________________________
 ### Notas Adicionales
 - Se proporcionará una copia de este formulario al participante
 - El participante puede contactar al investigador principal para cualquier consulta
-- Este estudio ha sido aprobado por el comité ético correspondiente 
