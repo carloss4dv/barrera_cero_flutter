@@ -1,93 +1,49 @@
-# Guía de Evaluación: Thinking out loud
+# Documentación de Evaluación - Barrera Cero
 
-## Introducción
-Esta guía describe el proceso de evaluación de usabilidad mediante el método "Thinking out loud" (Pensamiento en voz alta) para la aplicación Barrera Cero.
+## Índice
 
-## Objetivo
-Evaluar la usabilidad y experiencia de usuario de la aplicación mediante la observación directa de usuarios mientras interactúan con la aplicación y verbalizan sus pensamientos.
+### 1. Guías de Evaluación
+- [Tareas de Evaluación](tareas_evaluacion.md) - Lista detallada de tareas y escenarios para evaluar la aplicación
+- [Perfiles de Usuarios](perfiles_usuarios.md) - Descripción de los diferentes perfiles de usuarios para la evaluación
 
-## Preparación
+### 2. Formularios
+- [Formulario de Consentimiento](formulario_consentimiento.md) - Documento legal para obtener el consentimiento de los participantes
+- [Formulario Post-Evaluación](formulario_post_evaluacion.md) - Cuestionario para recopilar feedback después de la evaluación
 
-### Materiales Necesarios
-- Aplicación Barrera Cero instalada en un dispositivo móvil
-- Guión de tareas para los usuarios
-- Formulario de consentimiento
-- Formulario de evaluación post-tarea
-- Cronómetro
+### 3. Proceso de Evaluación
+1. **Preparación**
+   - Selección de participantes según perfiles
+   - Configuración del entorno de evaluación
+   - Preparación de materiales
 
-### Selección de Participantes
-Se recomienda evaluar con 5-7 usuarios que representen diferentes perfiles:
-- Usuarios con experiencia en aplicaciones de accesibilidad
-- Usuarios sin experiencia previa
-- Usuarios con diferentes niveles de familiaridad con la tecnología
+2. **Durante la Evaluación**
+   - Explicación del proceso
+   - Ejecución de tareas
+   - Observación y documentación
 
-## Proceso de Evaluación
+3. **Post-Evaluación**
+   - Recopilación de feedback
+   - Análisis de resultados
+   - Generación de reportes
 
-### 1. Introducción (5 minutos)
-- Presentar el propósito de la evaluación
-- Explicar el método "Thinking out loud"
-- Obtener consentimiento informado
-- Aclarar que no hay respuestas correctas o incorrectas
+### 4. Métricas de Evaluación
+- Tasa de éxito en tareas
+- Tiempo de completar tareas
+- Número de errores
+- Nivel de satisfacción
+- Frecuencia de problemas de usabilidad
 
-### 2. Tareas a Realizar
-Los usuarios deberán completar las siguientes tareas mientras verbalizan sus pensamientos:
+### 5. Consideraciones Éticas
+- Privacidad de los participantes
+- Confidencialidad de los datos
+- Consentimiento informado
+- Derecho a retirarse
 
-1. Configuración inicial
-   - Abrir la aplicación por primera vez
-   - Configurar preferencias básicas
-   - Explorar las opciones de accesibilidad
+## Notas Importantes
+- Todas las evaluaciones deben seguir el protocolo establecido
+- Se debe mantener la confidencialidad de los datos
+- Los resultados deben ser documentados de manera objetiva
+- Las sugerencias de mejora deben ser específicas y accionables
 
-2. Uso básico
-   - Navegar por el mapa interactivo
-   - Explorar los marcadores de accesibilidad
-   - Probar las funciones de filtrado
-
-3. Escenarios específicos
-   - Crear un reporte de accesibilidad
-   - Planificar una ruta accesible
-   - Participar en el foro de discusión
-
-### 3. Durante la Evaluación
-- Anotar observaciones sobre:
-  - Comentarios verbales del usuario
-  - Expresiones faciales y lenguaje corporal
-  - Tiempo de completar tareas
-  - Errores y dificultades encontradas
-  - Momentos de confusión o frustración
-
-### 4. Post-Evaluación (10 minutos)
-- Cuestionario de satisfacción
-- Preguntas abiertas sobre la experiencia
-- Recopilación de sugerencias de mejora
-
-## Análisis de Resultados
-
-### Métricas a Evaluar
-1. Tasa de éxito en tareas
-2. Tiempo de completar tareas
-3. Número de errores
-4. Nivel de satisfacción
-5. Frecuencia de problemas de usabilidad
-
-### Categorías de Análisis
-- Facilidad de uso
-- Eficiencia
-- Satisfacción
-- Accesibilidad
-- Problemas críticos
-
-## Reporte Final
-El reporte debe incluir:
-- Resumen ejecutivo
-- Metodología utilizada
-- Perfiles de usuarios
-- Resultados detallados
-- Problemas identificados
-- Recomendaciones de mejora
-- Plan de acción
-
-## Consideraciones Éticas
-- Respetar la privacidad de los participantes
-- Mantener la confidencialidad de los datos
-- Obtener consentimiento informado
-- Permitir la retirada en cualquier momento 
+## Contacto
+Para cualquier consulta sobre el proceso de evaluación, contactar al equipo de desarrollo de Barrera Cero. 
