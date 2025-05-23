@@ -23,7 +23,6 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
-
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -39,11 +38,25 @@ class _LoginPageState extends State<LoginPage> {
       );
       
       if (mounted && userCredential.user != null) {
-        // La sesión se mantendrá automáticamente
-        Navigator.of(context).pushReplacementNamed(
-          '/profile',
-          arguments: userCredential.user!.uid,
+        // Mostrar mensaje de éxito
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Inicio de sesión exitoso'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
         );
+        
+        // Pequeña pausa para permitir que el usuario vea el mensaje
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        // Redireccionar a la pantalla del mapa
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/', // Ruta al mapa
+            (route) => false, // Elimina todas las rutas anteriores
+          );
+        }
       }
     } catch (e) {
       setState(() {
