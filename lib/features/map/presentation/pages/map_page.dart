@@ -19,6 +19,7 @@ import '../../../../main.dart';
 import '../../infrastructure/providers/map_filters_provider.dart';
 import '../../infrastructure/services/run_upload_mock_data.dart';
 import '../../../accessibility/infrastructure/services/run_upload_validation_mock_data.dart';
+import '../../../auth/service/auth_service.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -32,28 +33,55 @@ class MapPage extends StatelessWidget {
   }
 }
 
-class MapView extends StatelessWidget {
+class MapView extends StatefulWidget {
   const MapView({Key? key}) : super(key: key);
+
+  @override
+  State<MapView> createState() => _MapViewState();
+}
+
+class _MapViewState extends State<MapView> {
+  final ValueNotifier<bool> isChallengesPanelExpanded = ValueNotifier<bool>(false);
+  bool _isAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Verificar estado de autenticación actual
+    _updateAuthState();
+    // Escuchar cambios de autenticación
+    authService.authStateChanges.listen((user) {
+      if (mounted) {
+        _updateAuthState();
+      }
+    });
+  }
+  
+  void _updateAuthState() {
+    setState(() {
+      _isAuthenticated = authService.currentUser != null;
+      // Si el usuario cierra sesión y el panel está abierto, cerrarlo
+      if (!_isAuthenticated && isChallengesPanelExpanded.value) {
+        isChallengesPanelExpanded.value = false;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     
-    // Add state for challenges panel
-    final ValueNotifier<bool> isChallengesPanelExpanded = ValueNotifier<bool>(false);
-    
     return Scaffold(
       body: BlocBuilder<MarkerCubit, MarkerState>(
         builder: (context, state) {
-          return Stack(
-            children: [
+          return Stack(            children: [
               // Mapa principal
               FlutterMap(
                 options: MapOptions(
-                  center: state.currentLocation?.position ?? 
+                  initialCenter: state.currentLocation?.position ?? 
                       const LatLng(41.6560, -0.8773), // Centro por defecto (Zaragoza)
-                  zoom: 15,
+                  initialZoom: 15.0,
                   onTap: (_, __) {
                     // Cerrar detalle del marcador si está abierto
                     if (state.hasSelectedMarker) {
@@ -214,25 +242,24 @@ class MapView extends StatelessWidget {
                         );
                       },
                     ),
-                    
-                    const SizedBox(height: 8),
-                    
-                    // Botón de desafíos (nuevo)
-                    FloatingActionButton(
-                      heroTag: 'challenges',
-                      mini: true,
-                      backgroundColor: isHighContrastMode 
-                          ? AccessibilityProvider.kAccentColor 
-                          : Colors.white,
-                      child: Icon(
-                        Icons.emoji_events,
-                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                      const SizedBox(height: 8),
+                      // Botón de desafíos (solo visible si hay usuario autenticado)
+                    if (_isAuthenticated)
+                      FloatingActionButton(
+                        heroTag: 'challenges',
+                        mini: true,
+                        backgroundColor: isHighContrastMode 
+                            ? AccessibilityProvider.kAccentColor 
+                            : Colors.white,
+                        child: Icon(
+                          Icons.emoji_events,
+                          color: isHighContrastMode ? Colors.black : Colors.black87,
+                        ),
+                        onPressed: () {
+                          // Toggle challenges panel
+                          isChallengesPanelExpanded.value = !isChallengesPanelExpanded.value;
+                        },
                       ),
-                      onPressed: () {
-                        // Toggle challenges panel
-                        isChallengesPanelExpanded.value = !isChallengesPanelExpanded.value;
-                      },
-                    ),
                     
                     const SizedBox(height: 8),
                     
@@ -271,20 +298,19 @@ class MapView extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              
-              // Challenges Panel (new)
-              ValueListenableBuilder<bool>(
-                valueListenable: isChallengesPanelExpanded,
-                builder: (context, isExpanded, _) {
-                  return ChallengesPanel(
-                    isExpanded: isExpanded,
-                    onClose: () {
-                      isChallengesPanelExpanded.value = false;
-                    },
-                  );
-                },
-              ),
+              ),              // Challenges Panel (solo visible si hay usuario autenticado)
+              if (_isAuthenticated)
+                ValueListenableBuilder<bool>(
+                  valueListenable: isChallengesPanelExpanded,
+                  builder: (context, isExpanded, _) {
+                    return ChallengesPanel(
+                      isExpanded: isExpanded,
+                      onClose: () {
+                        isChallengesPanelExpanded.value = false;
+                      },
+                    );
+                  },
+                ),
 
               // Indicador de carga para la ruta
               if (state.isLoadingRoute)
@@ -390,10 +416,8 @@ class MapView extends StatelessWidget {
     print('Total de marcadores construidos: ${markers.length}');
     return markers;
   }
-
   List<Color> _getRouteGradientColors(BuildContext context, List<LatLng> route, bool isHighContrastMode) {
     final colors = <Color>[];
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     
     // Para cada punto de la ruta
     for (int i = 0; i < route.length; i++) {

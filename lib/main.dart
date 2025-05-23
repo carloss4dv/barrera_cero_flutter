@@ -75,13 +75,12 @@ class MyApp extends StatelessWidget {
               colorScheme: ColorScheme.fromSeed(
                 seedColor: const Color(0xFF1E88E5),
                 brightness: Brightness.light,
-              ),
-              appBarTheme: const AppBarTheme(
+              ),              appBarTheme: const AppBarTheme(
                 centerTitle: true,
                 elevation: 0,
                 scrolledUnderElevation: 0,
               ),
-              cardTheme: CardTheme(
+              cardTheme: CardThemeData(
                 elevation: 2,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
