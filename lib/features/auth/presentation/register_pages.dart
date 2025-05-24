@@ -57,10 +57,14 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       await _userService.createUser(newUser);
-      Navigator.of(context).pushReplacementNamed('/login');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cuenta creada exitosamente')),
-      );
+      
+      // Mostrar mensaje de éxito y redirigir
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cuenta creada exitosamente')),
+        );
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
 
     } catch (e) {
       setState(() {

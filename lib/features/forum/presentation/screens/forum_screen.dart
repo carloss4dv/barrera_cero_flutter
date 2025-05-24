@@ -57,8 +57,7 @@ class _ForumScreenState extends State<ForumScreen> {
         });
       },
     );
-  }
-  Future<void> _addMessage() async {
+  }  Future<void> _addMessage() async {
     if (_messageController.text.isEmpty) return;
 
     final user = _authService.currentUser;
@@ -67,12 +66,19 @@ class _ForumScreenState extends State<ForumScreen> {
         const SnackBar(content: Text('Debes iniciar sesión para publicar mensajes')),
       );
       return;
-    }
+    }    // Debug: Imprimir información del usuario
+    print('Usuario actual:');
+    print('- UID: ${user.uid}');
+    print('- Email: ${user.email}');
+    print('- DisplayName: ${user.displayName}');
+    
+    final userName = user.email ?? 'Usuario';
+    print('- Nombre a usar: $userName');
 
     final result = await _forumService.addMessage(
       _messageController.text,
       user.uid, // ID de usuario real
-      user.displayName ?? user.email ?? 'Usuario', // Nombre de usuario real
+      userName, // Usar email del usuario
     );
 
     result.fold(
@@ -140,13 +146,11 @@ class _ForumScreenState extends State<ForumScreen> {
                                   const SnackBar(content: Text('Debes iniciar sesión para comentar')),
                                 );
                                 return;
-                              }
-
-                              final result = await _forumService.addComment(
+                              }                              final result = await _forumService.addComment(
                                 message.id,
                                 comment,
                                 user.uid, // ID de usuario real
-                                user.displayName ?? user.email ?? 'Usuario', // Nombre de usuario real
+                                user.email ?? 'Usuario', // Usar email del usuario
                               );
 
                               result.fold(
