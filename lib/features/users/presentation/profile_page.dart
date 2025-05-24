@@ -189,9 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Sección de puntos y badges
+              const SizedBox(height: 16),              // Sección de puntos y badges
               Card(
                 elevation: 4,
                 child: Padding(
@@ -201,17 +199,102 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.stars, color: Colors.amber),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Puntos de contribución: ${_user!.contributionPoints}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          const Icon(Icons.stars, color: Colors.amber, size: 32),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${_user!.contributionPoints} B-points',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.amber,
+                                  ),
+                                ),
+                                const Text(
+                                  'Puntos de contribución',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      
+                      // Información sobre cómo ganar puntos
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.info, color: Colors.blue.shade700, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '¿Cómo ganar B-points?',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Icon(Icons.how_to_vote, color: Colors.green.shade600, size: 18),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Votar en validaciones de accesibilidad: +20 puntos',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.rate_review, color: Colors.blue.shade600, size: 18),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Reportar problemas de accesibilidad',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.group, color: Colors.purple.shade600, size: 18),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text(
+                                    'Participar en la comunidad',
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      
                       const SizedBox(height: 16),
                       const Text(
                         'Insignias',
@@ -221,17 +304,35 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        children: _user!.badges.map((badge) {
-                          return Chip(
-                            label: Text(badge.name),
-                            avatar: CircleAvatar(
-                              backgroundImage: NetworkImage(badge.iconUrl),
+                      _user!.badges.isEmpty
+                          ? Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(Icons.emoji_events, color: Colors.grey),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'No tienes insignias aún. ¡Sigue contribuyendo!',
+                                    style: TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Wrap(
+                              spacing: 8,
+                              children: _user!.badges.map((badge) {
+                                return Chip(
+                                  label: Text(badge.name),
+                                  avatar: CircleAvatar(
+                                    backgroundImage: NetworkImage(badge.iconUrl),
+                                  ),
+                                );
+                              }).toList(),
                             ),
-                          );
-                        }).toList(),
-                      ),
                     ],
                   ),
                 ),

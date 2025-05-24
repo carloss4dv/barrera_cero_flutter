@@ -4,9 +4,15 @@ import 'package:barrera_cero/features/accessibility/domain/i_accessibility_repor
 import 'package:barrera_cero/features/accessibility/domain/i_community_validation_service.dart';
 import 'package:barrera_cero/features/accessibility/infrastructure/services/mock_accessibility_report_service.dart';
 import 'package:barrera_cero/features/accessibility/infrastructure/services/community_validation_service.dart';
+import 'package:barrera_cero/features/users/services/user_service.dart';
 
 void configureAccessibilityDependencies() {
   final getIt = GetIt.instance;
+
+  // Registrar UserService si no está ya registrado
+  if (!getIt.isRegistered<UserService>()) {
+    getIt.registerLazySingleton<UserService>(() => UserService());
+  }
 
   // Servicios
   getIt.registerLazySingleton<IAccessibilityReportService>(
@@ -14,6 +20,9 @@ void configureAccessibilityDependencies() {
   );
 
   getIt.registerLazySingleton<ICommunityValidationService>(
-    () => CommunityValidationService(FirebaseFirestore.instance),
+    () => CommunityValidationService(
+      FirebaseFirestore.instance,
+      getIt<UserService>(),
+    ),
   );
-} 
+}

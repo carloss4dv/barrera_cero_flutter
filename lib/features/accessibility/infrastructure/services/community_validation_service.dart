@@ -1,13 +1,15 @@
 import 'package:result_dart/result_dart.dart';
 import 'package:barrera_cero/features/accessibility/domain/community_validation_model.dart';
 import 'package:barrera_cero/features/accessibility/domain/i_community_validation_service.dart';
+import 'package:barrera_cero/features/users/services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CommunityValidationService implements ICommunityValidationService {
   final FirebaseFirestore _firestore;
+  final UserService _userService;
   static const int _defaultVotesNeeded = 10;
 
-  CommunityValidationService(this._firestore);
+  CommunityValidationService(this._firestore, this._userService);
 
   @override
   Future<Result<List<CommunityValidationModel>>> getValidationsForMarker(String markerId) async {
@@ -26,9 +28,7 @@ class CommunityValidationService implements ICommunityValidationService {
     } catch (e) {
       return Failure(Exception('Error al cargar validaciones: $e'));
     }
-  }
-
-  @override
+  }  @override
   Future<Result<CommunityValidationModel>> addVote(
     String markerId,
     ValidationQuestionType questionType,
@@ -42,7 +42,7 @@ class CommunityValidationService implements ICommunityValidationService {
           .collection('validations')
           .doc(questionType.toString());
 
-      return await _firestore.runTransaction((transaction) async {
+      final transactionResult = await _firestore.runTransaction<Result<CommunityValidationModel>>((transaction) async {
         final doc = await transaction.get(validationRef);
         CommunityValidationModel validation;
 
@@ -85,6 +85,22 @@ class CommunityValidationService implements ICommunityValidationService {
         transaction.set(validationRef, validation.toJson());
         return Success(validation);
       });
+
+      // Si la transacción fue exitosa, otorgar B-points al usuario
+      return transactionResult.fold(
+        (validation) async {
+          try {
+            await _userService.awardValidationPoints(userId);
+            print('Se otorgaron ${UserService.VALIDATION_VOTE_POINTS} B-points al usuario $userId por votar en validación');
+            return Success(validation);
+          } catch (e) {
+            print('Error al otorgar puntos al usuario $userId: $e');
+            // Devolver éxito de la validación aunque haya fallado la otorgación de puntos
+            return Success(validation);
+          }
+        },
+        (error) => Failure(error),
+      );
     } catch (e) {
       return Failure(Exception('Error al registrar voto: $e'));
     }
@@ -119,4 +135,4 @@ class CommunityValidationService implements ICommunityValidationService {
       return Failure(Exception('Error al crear validación: $e'));
     }
   }
-} 
+}

@@ -3,16 +3,15 @@ import 'package:result_dart/result_dart.dart';
 import '../../domain/community_validation_model.dart';
 import '../../domain/i_community_validation_service.dart';
 import 'community_validation_service.dart';
+import 'package:barrera_cero/features/users/services/user_service.dart';
 
 class ValidationMockDataUploader {
   final FirebaseFirestore _firestore;
-  final ICommunityValidationService _validationService;
-
-  ValidationMockDataUploader({
+  final ICommunityValidationService _validationService;  ValidationMockDataUploader({
     FirebaseFirestore? firestore,
     ICommunityValidationService? validationService,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _validationService = validationService ?? CommunityValidationService(FirebaseFirestore.instance);
+       _validationService = validationService ?? CommunityValidationService(FirebaseFirestore.instance, UserService());
 
   Future<void> uploadMockData() async {
     print('\n=== Iniciando subida de datos mock de validación a Firestore ===');

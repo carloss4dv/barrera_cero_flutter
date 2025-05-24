@@ -10,6 +10,7 @@ import '../../../accessibility/domain/community_validation_model.dart';
 import '../../../accessibility/domain/i_community_validation_service.dart';
 import '../../application/marker_cubit.dart';
 import '../../../auth/service/auth_service.dart';
+import '../../../users/presentation/widgets/b_points_widget.dart';
 
 class MarkerDetailCard extends StatefulWidget {
   final MarkerModel marker;
@@ -34,8 +35,10 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
   List<AccessibilityReportModel>? _reports;
   List<CommunityValidationModel>? _validations;
   String? _errorMessage;
-  late IAccessibilityReportService _reportService;
-  late ICommunityValidationService _validationService;
+  late IAccessibilityReportService _reportService;  late ICommunityValidationService _validationService;
+  
+  // Para mostrar animación de B-points
+  OverlayEntry? _overlayEntry;
   
   @override
   void initState() {
@@ -103,10 +106,10 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       }
     }
   }
-  
-  @override
+    @override
   void dispose() {
     _scrollController.dispose();
+    _overlayEntry?.remove();
     super.dispose();
   }
 
@@ -127,7 +130,31 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
-    }
+    }  }
+  
+  void _showBPointsAnimation() {
+    if (!mounted) return;
+    
+    _overlayEntry?.remove();
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).size.height * 0.3,
+        left: MediaQuery.of(context).size.width * 0.2,
+        right: MediaQuery.of(context).size.width * 0.2,
+        child: Material(
+          color: Colors.transparent,
+          child: BPointsEarnedAnimation(
+            pointsEarned: 20,
+            onAnimationComplete: () {
+              _overlayEntry?.remove();
+              _overlayEntry = null;
+            },
+          ),
+        ),
+      ),
+    );
+    
+    Overlay.of(context).insert(_overlayEntry!);
   }
 
   @override
@@ -824,23 +851,47 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       ],
     );
   }
-
   Future<void> _handleVote(ValidationQuestionType questionType, bool isPositive) async {
     try {
+      // Obtener el usuario actual del servicio de autenticación
+      final authService = GetIt.instance<AuthService>();
+      final currentUser = authService.currentUser;
+      
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Debes iniciar sesión para votar')),
+          );
+        }
+        return;
+      }
+
       final result = await _validationService.addVote(
         widget.marker.id,
         questionType,
         isPositive,
-        'current_user_id', // TODO: Reemplazar con ID de usuario real
-      );
-
-      result.fold(
+        currentUser.uid, // Usar ID real del usuario
+      );      result.fold(
         (success) {
           setState(() {
             _validations = _validations?.map((v) => 
               v.questionType == questionType ? success : v
             ).toList() ?? [success];
           });
+          
+          // Mostrar animación de B-points
+          _showBPointsAnimation();
+          
+          // Mostrar mensaje de éxito con información de puntos
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('¡Voto registrado! Has ganado 20 B-points'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
         },
         (failure) {
           if (mounted) {
