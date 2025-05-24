@@ -2,12 +2,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:get_it/get_it.dart';
 import 'package:result_type/result_type.dart';
+import 'package:result_dart/result_dart.dart' as result_dart;
 
 import '../domain/i_marker_service.dart';
 import '../domain/marker_model.dart';
 import '../domain/route_error.dart';
 import '../infrastructure/services/route_service.dart';
 import 'marker_state.dart';
+import '../../accessibility/domain/i_accessibility_report_service.dart';
+import '../../accessibility/domain/i_community_validation_service.dart';
 
 /// Cubit para gestionar los marcadores en el mapa
 class MarkerCubit extends Cubit<MarkerState> {
@@ -101,9 +104,11 @@ class MarkerCubit extends Cubit<MarkerState> {
       ));
     }
   }
-
-  /// Selecciona un marcador por su ID
+  /// Selecciona un marcador por su ID y registra todos sus datos por consola
   Future<void> selectMarkerById(String id) async {
+    print('======== INFORMACIÓN DETALLADA DEL LUGAR SELECCIONADO ========');
+    print('ID del marcador: $id');
+    
     emit(state.copyWith(
       selectedMarkerState: const DataState.loading(),
     ));
@@ -111,6 +116,90 @@ class MarkerCubit extends Cubit<MarkerState> {
     final result = await _markerService.getMarkerById(id);
 
     if (result.isSuccess) {
+      final marker = result.success;
+      
+      // Log de información básica del marcador
+      print('\n----- DATOS BÁSICOS -----');
+      print('Título: ${marker.title}');
+      print('Descripción: ${marker.description}');
+      print('Tipo: ${marker.type.toString()}');
+      print('Posición: Lat ${marker.position.latitude}, Lng ${marker.position.longitude}');
+      
+      // Log de metadatos de accesibilidad
+      print('\n----- METADATOS DE ACCESIBILIDAD -----');
+      print('Rampa: ${marker.metadata.hasRamp ? 'Sí' : 'No'}');
+      print('Ascensor: ${marker.metadata.hasElevator ? 'Sí' : 'No'}');
+      print('Baño accesible: ${marker.metadata.hasAccessibleBathroom ? 'Sí' : 'No'}');
+      print('Señalización Braille: ${marker.metadata.hasBrailleSignage ? 'Sí' : 'No'}');
+      print('Guía de audio: ${marker.metadata.hasAudioGuidance ? 'Sí' : 'No'}');
+      print('Pavimento táctil: ${marker.metadata.hasTactilePavement ? 'Sí' : 'No'}');
+      print('Puntuación de accesibilidad: ${marker.metadata.accessibilityScore}/10');
+      
+      if (marker.metadata.additionalNotes.isNotEmpty) {
+        print('Notas adicionales: ${marker.metadata.additionalNotes}');
+      }
+      
+      // Obtener reportes de accesibilidad
+      try {
+        final reportService = GetIt.instance<IAccessibilityReportService>();
+        final reportResult = await reportService.getReportsForMarker(id);
+        
+        reportResult.fold(
+          (reports) {
+            print('\n----- REPORTES DE ACCESIBILIDAD (${reports.length}) -----');
+            if (reports.isEmpty) {
+              print('No hay reportes de accesibilidad.');
+            } else {
+              for (var i = 0; i < reports.length; i++) {
+                final report = reports[i];
+                print('Reporte #${i+1}:');
+                print('  ID: ${report.id}');
+                print('  Usuario: ${report.userId}');
+                print('  Nivel: ${report.level.toString()}');
+                print('  Comentarios: ${report.comments}');
+              }
+            }
+          },
+          (error) {
+            print('Error al cargar reportes: ${error.message}');
+          },
+        );
+      } catch (e) {
+        print('Error al obtener reportes: $e');
+      }
+      
+      // Obtener validaciones de la comunidad
+      try {
+        final validationService = GetIt.instance<ICommunityValidationService>();
+        final validationResult = await validationService.getValidationsForMarker(id);
+        
+        validationResult.fold(
+          (validations) {
+            print('\n----- VALIDACIONES DE LA COMUNIDAD (${validations.length}) -----');
+            if (validations.isEmpty) {
+              print('No hay validaciones de la comunidad.');
+            } else {
+              for (var i = 0; i < validations.length; i++) {
+                final validation = validations[i];
+                print('Validación #${i+1}:');
+                print('  Tipo de pregunta: ${validation.questionType.toString()}');
+                print('  Votos positivos: ${validation.positiveVotes}');
+                print('  Votos negativos: ${validation.negativeVotes}');
+                print('  Estado: ${validation.status.toString()}');
+                print('  Progreso: ${(validation.getProgress() * 100).toStringAsFixed(1)}%');
+              }
+            }
+          },
+          (error) {
+            print('Error al cargar validaciones: $error');
+          },
+        );
+      } catch (e) {
+        print('Error al obtener validaciones: $e');
+      }
+      
+      print('\n======== FIN DE INFORMACIÓN DEL LUGAR ========\n');
+      
       // Limpiar los marcadores cercanos y mantener solo el seleccionado
       emit(state.copyWith(
         selectedMarkerState: DataState.success(result.success),
@@ -128,6 +217,7 @@ class MarkerCubit extends Cubit<MarkerState> {
         default:
           errorMessage = 'Error desconocido al obtener el marcador';
       }
+      print('Error al seleccionar marcador: $errorMessage');
       emit(state.copyWith(
         selectedMarkerState: DataState.error(errorMessage),
       ));
@@ -230,4 +320,4 @@ class MarkerCubit extends Cubit<MarkerState> {
       routeState: const DataState.idle(),
     ));
   }
-} 
+}

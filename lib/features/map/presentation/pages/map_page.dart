@@ -278,24 +278,24 @@ class _MapViewState extends State<MapView> {
                         Navigator.pushNamed(context, '/forum');
                       },
                     ),
+                      const SizedBox(height: 8),
                     
-                    const SizedBox(height: 8),
-                    
-                    // Botón temporal para subir datos mock comentar para eliminar de la interfaz
-                    FloatingActionButton(
-                      heroTag: 'upload_mock',
-                      mini: true,
-                      backgroundColor: isHighContrastMode 
-                          ? AccessibilityProvider.kAccentColor 
-                          : Colors.white,
-                      child: Icon(
-                        Icons.cloud_upload,
-                        color: isHighContrastMode ? Colors.black : Colors.black87,
+                    // Botón temporal para subir datos mock (oculto pero código preservado)
+                    if (false) // Condición que siempre es falsa para ocultar el botón
+                      FloatingActionButton(
+                        heroTag: 'upload_mock',
+                        mini: true,
+                        backgroundColor: isHighContrastMode 
+                            ? AccessibilityProvider.kAccentColor 
+                            : Colors.white,
+                        child: Icon(
+                          Icons.cloud_upload,
+                          color: isHighContrastMode ? Colors.black : Colors.black87,
+                        ),
+                        onPressed: () {
+                          runUploadMockData();
+                        },
                       ),
-                      onPressed: () {
-                        runUploadMockData();
-                      },
-                    ),
                   ],
                 ),
               ),              // Challenges Panel (solo visible si hay usuario autenticado)

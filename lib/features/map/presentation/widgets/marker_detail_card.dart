@@ -8,8 +8,8 @@ import '../../../accessibility/presentation/providers/accessibility_provider.dar
 import '../../domain/marker_model.dart';
 import '../../../accessibility/domain/community_validation_model.dart';
 import '../../../accessibility/domain/i_community_validation_service.dart';
-import 'package:result_dart/result_dart.dart';
 import '../../application/marker_cubit.dart';
+import '../../../auth/service/auth_service.dart';
 
 class MarkerDetailCard extends StatefulWidget {
   final MarkerModel marker;
@@ -137,11 +137,9 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     final theme = Theme.of(context);
     
     // Colores adaptados para alto contraste
-    final cardColor = isHighContrastMode ? theme.colorScheme.surface : Colors.white;
-    final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
+    final cardColor = isHighContrastMode ? theme.colorScheme.surface : Colors.white;    final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
     final accentColor = isHighContrastMode ? theme.colorScheme.primary : Colors.blue;
-    final dividerColor = isHighContrastMode ? theme.colorScheme.onSurface.withOpacity(0.5) : Colors.grey[300];
-    
+    // La variable dividerColor no se está usando, la eliminamos
     return SizedBox(
       height: MediaQuery.of(context).size.height,
       child: DraggableScrollableSheet(
@@ -252,8 +250,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                       ),
                     ),
                   ),
-                  
-                  // Sección de valoración
+                    // Sección de valoración
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Column(
@@ -267,29 +264,84 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildFeedbackButton(
-                              color: isHighContrastMode ? theme.colorScheme.secondary : Colors.green,
-                              icon: Icons.sentiment_very_satisfied,
-                              level: AccessibilityLevel.good,
-                              highContrastMode: isHighContrastMode,
-                            ),
-                            _buildFeedbackButton(
-                              color: isHighContrastMode ? theme.colorScheme.secondary : Colors.amber,
-                              icon: Icons.sentiment_neutral,
-                              level: AccessibilityLevel.medium,
-                              highContrastMode: isHighContrastMode,
-                            ),
-                            _buildFeedbackButton(
-                              color: isHighContrastMode ? theme.colorScheme.error : Colors.red,
-                              icon: Icons.sentiment_very_dissatisfied,
-                              level: AccessibilityLevel.bad,
-                              highContrastMode: isHighContrastMode,
-                            ),
-                          ],
-                        ),
+                        
+                        // Verificar si el usuario está autenticado
+                        Builder(builder: (context) {
+                          final authService = GetIt.instance<AuthService>();
+                          final bool isAuthenticated = authService.currentUser != null;
+                          
+                          if (isAuthenticated) {
+                            // Mostrar botones de reporte si está autenticado
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _buildFeedbackButton(
+                                  color: isHighContrastMode ? theme.colorScheme.secondary : Colors.green,
+                                  icon: Icons.sentiment_very_satisfied,
+                                  level: AccessibilityLevel.good,
+                                  highContrastMode: isHighContrastMode,
+                                ),
+                                _buildFeedbackButton(
+                                  color: isHighContrastMode ? theme.colorScheme.secondary : Colors.amber,
+                                  icon: Icons.sentiment_neutral,
+                                  level: AccessibilityLevel.medium,
+                                  highContrastMode: isHighContrastMode,
+                                ),
+                                _buildFeedbackButton(
+                                  color: isHighContrastMode ? theme.colorScheme.error : Colors.red,
+                                  icon: Icons.sentiment_very_dissatisfied,
+                                  level: AccessibilityLevel.bad,
+                                  highContrastMode: isHighContrastMode,
+                                ),
+                              ],
+                            );
+                          } else {
+                            // Mostrar mensaje de inicio de sesión si no está autenticado
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16.0),
+                              child: Center(
+                                child: Column(
+                                  children: [                                    Icon(
+                                      Icons.lock_outline,
+                                      color: textColor.withOpacity(0.6),
+                                      size: 32,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Debes iniciar sesión para añadir reportes',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                        color: textColor.withOpacity(0.7),
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pushNamed('/login');
+                                      },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.login, color: accentColor, size: 18),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Iniciar sesión',
+                                            style: TextStyle(
+                                              color: accentColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                        }),
                       ],
                     ),
                   ),
@@ -432,20 +484,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         },
       ),
     );
-  }
-
-  Color _getMarkerColor() {
-    switch (widget.marker.type) {
-      case MarkerType.pointOfInterest:
-        return Colors.orange;
-      case MarkerType.destination:
-        return Colors.amber;
-      case MarkerType.currentLocation:
-        return Colors.red;
-      default:
-        return widget.marker.color;
-    }
-  }
+  }  // Método eliminado ya que no se estaba utilizando
 
   Widget _buildFeedbackButton({
     required Color color,
@@ -484,8 +523,49 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       ),
     );
   }
-
   Future<void> _showReportDialog(AccessibilityLevel level) async {
+    final authService = GetIt.instance<AuthService>();
+    
+    // Verificar si el usuario está autenticado
+    if (authService.currentUser == null) {
+      // Mostrar diálogo de autenticación requerida
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text(
+            'Inicio de sesión requerido',
+            style: TextStyle(color: Colors.blue),
+          ),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Debes iniciar sesión para poder añadir reportes de accesibilidad.'),
+              SizedBox(height: 10),
+              Text(
+                'Los reportes de la comunidad nos ayudan a mejorar la información de accesibilidad para todos.',
+                style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.of(context).pushNamed('/login');
+              },
+              child: const Text('Iniciar sesión'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    
+    // Si está autenticado, mostrar el diálogo normal
     final TextEditingController commentController = TextEditingController();
     
     await showDialog(
@@ -646,7 +726,6 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       ),
     );
   }
-
   Widget _buildValidationQuestion({
     required String question,
     required ValidationQuestionType questionType,
@@ -669,6 +748,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
+    final authService = GetIt.instance<AuthService>();
+    final bool isAuthenticated = authService.currentUser != null;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -681,23 +762,49 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
           ),
         ),
         const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildVoteButton(
-              icon: Icons.check_circle,
-              label: 'Sí',
-              color: Colors.green,
-              onTap: () => _handleVote(questionType, true),
+        // Mostrar botones de voto solo si el usuario está autenticado
+        if (isAuthenticated)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildVoteButton(
+                icon: Icons.check_circle,
+                label: 'Sí',
+                color: Colors.green,
+                onTap: () => _handleVote(questionType, true),
+              ),
+              _buildVoteButton(
+                icon: Icons.cancel,
+                label: 'No',
+                color: Colors.red,
+                onTap: () => _handleVote(questionType, false),
+              ),
+            ],
+          )
+        else          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.lock_outline,
+                    color: textColor.withOpacity(0.6),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Debes iniciar sesión para votar',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: textColor.withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            _buildVoteButton(
-              icon: Icons.cancel,
-              label: 'No',
-              color: Colors.red,
-              onTap: () => _handleVote(questionType, false),
-            ),
-          ],
-        ),
+          ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
           value: validation?.getProgress() ?? 0,
