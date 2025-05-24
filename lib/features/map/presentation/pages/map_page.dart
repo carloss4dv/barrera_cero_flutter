@@ -262,8 +262,7 @@ class _MapViewState extends State<MapView> {
                       ),
                     
                     const SizedBox(height: 8),
-                    
-                    // Botón del foro
+                      // Botón del foro
                     FloatingActionButton(
                       heroTag: 'forum',
                       mini: true,
@@ -275,7 +274,33 @@ class _MapViewState extends State<MapView> {
                         color: isHighContrastMode ? Colors.black : Colors.black87,
                       ),
                       onPressed: () {
-                        Navigator.pushNamed(context, '/forum');
+                        if (_isAuthenticated) {
+                          Navigator.pushNamed(context, '/forum');
+                        } else {
+                          // Mostrar diálogo para iniciar sesión
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Acceso al Foro'),
+                              content: const Text(
+                                'Debes iniciar sesión para acceder al foro de experiencias.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancelar'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    Navigator.pushNamed(context, '/login');
+                                  },
+                                  child: const Text('Iniciar Sesión'),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
                       },
                     ),
                       const SizedBox(height: 8),

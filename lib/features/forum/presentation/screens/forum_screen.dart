@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../domain/forum_message_model.dart';
 import '../../domain/i_forum_service.dart';
 import 'package:get_it/get_it.dart';
+import '../../../auth/service/auth_service.dart';
 
 class ForumScreen extends StatefulWidget {
   const ForumScreen({Key? key}) : super(key: key);
@@ -13,6 +13,7 @@ class ForumScreen extends StatefulWidget {
 
 class _ForumScreenState extends State<ForumScreen> {
   final IForumService _forumService = GetIt.instance<IForumService>();
+  final AuthService _authService = GetIt.instance<AuthService>();
   final TextEditingController _messageController = TextEditingController();
   List<ForumMessageModel> _messages = [];
   bool _isLoading = true;
@@ -21,6 +22,17 @@ class _ForumScreenState extends State<ForumScreen> {
   @override
   void initState() {
     super.initState();
+    _checkAuthenticationAndLoad();
+  }
+
+  Future<void> _checkAuthenticationAndLoad() async {
+    if (_authService.currentUser == null) {
+      // Usuario no autenticado, redirigir al login
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      });
+      return;
+    }
     _loadMessages();
   }
 
@@ -46,14 +58,21 @@ class _ForumScreenState extends State<ForumScreen> {
       },
     );
   }
-
   Future<void> _addMessage() async {
     if (_messageController.text.isEmpty) return;
 
+    final user = _authService.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes iniciar sesión para publicar mensajes')),
+      );
+      return;
+    }
+
     final result = await _forumService.addMessage(
       _messageController.text,
-      'current_user_id', // TODO: Reemplazar con ID de usuario real
-      'Usuario Actual', // TODO: Reemplazar con nombre de usuario real
+      user.uid, // ID de usuario real
+      user.displayName ?? user.email ?? 'Usuario', // Nombre de usuario real
     );
 
     result.fold(
@@ -114,13 +133,20 @@ class _ForumScreenState extends State<ForumScreen> {
                         itemBuilder: (context, index) {
                           final message = _messages[index];
                           return _MessageCard(
-                            message: message,
-                            onComment: (comment) async {
+                            message: message,                            onComment: (comment) async {
+                              final user = _authService.currentUser;
+                              if (user == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Debes iniciar sesión para comentar')),
+                                );
+                                return;
+                              }
+
                               final result = await _forumService.addComment(
                                 message.id,
                                 comment,
-                                'current_user_id', // TODO: Reemplazar con ID de usuario real
-                                'Usuario Actual', // TODO: Reemplazar con nombre de usuario real
+                                user.uid, // ID de usuario real
+                                user.displayName ?? user.email ?? 'Usuario', // Nombre de usuario real
                               );
 
                               result.fold(
@@ -135,11 +161,18 @@ class _ForumScreenState extends State<ForumScreen> {
                                   );
                                 },
                               );
-                            },
-                            onLike: () async {
+                            },                            onLike: () async {
+                              final user = _authService.currentUser;
+                              if (user == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Debes iniciar sesión para dar "me gusta"')),
+                                );
+                                return;
+                              }
+
                               final result = await _forumService.likeMessage(
                                 message.id,
-                                'current_user_id', // TODO: Reemplazar con ID de usuario real
+                                user.uid, // ID de usuario real
                               );
 
                               result.fold(
