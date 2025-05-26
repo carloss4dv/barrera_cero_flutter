@@ -85,9 +85,8 @@ class CommentItem extends StatelessWidget {
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Usuario ${report.userId}',
+                  children: [                    Text(
+                      report.userName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 14,

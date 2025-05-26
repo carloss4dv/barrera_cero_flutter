@@ -5,7 +5,6 @@ import '../services/mock_accessibility_report_service.dart';
 /// Registra todos los servicios y repositorios de accesibilidad
 void registerAccessibilityProviders() {
   final GetIt getIt = GetIt.instance;
-  
   // Registrar el servicio de reportes de accesibilidad como singleton
   getIt.registerLazySingleton<IAccessibilityReportService>(
     () => MockAccessibilityReportService(),

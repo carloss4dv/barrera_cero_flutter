@@ -8,13 +8,14 @@ abstract class AccessibilityReportModel with _$AccessibilityReportModel {
   const factory AccessibilityReportModel({
     required String id,
     required String userId,
+    required String userName,
     required String comments,
     required AccessibilityLevel level,
   }) = _AccessibilityReportModel;
-
   factory AccessibilityReportModel.empty() => const AccessibilityReportModel(
         id: '',
         userId: '',
+        userName: '',
         comments: '',
         level: AccessibilityLevel.medium,
       );

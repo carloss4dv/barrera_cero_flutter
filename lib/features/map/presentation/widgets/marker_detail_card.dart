@@ -14,6 +14,7 @@ import '../../../users/presentation/widgets/b_points_widget.dart';
 import '../../../users/domain/models/badge_system.dart';
 import '../../../users/presentation/widgets/badges_widget.dart';
 import '../../../users/services/user_service.dart';
+import '../../../../services/local_user_storage_service.dart';
 
 class MarkerDetailCard extends StatefulWidget {
   final MarkerModel marker;
@@ -659,8 +660,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         ],
       ),
     );
-  }
-    Future<void> _submitReport(AccessibilityLevel level, String comment) async {
+  }    Future<void> _submitReport(AccessibilityLevel level, String comment) async {
     final authService = GetIt.instance<AuthService>();
     final currentUser = authService.currentUser;
     
@@ -671,9 +671,31 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       return;
     }
     
+    // Obtener el nombre del usuario de las shared preferences
+    String userName = 'Usuario'; // Valor por defecto
+    try {
+      final localUserStorage = LocalUserStorageService();
+      final retrievedUserName = await localUserStorage.getUserName();
+      if (retrievedUserName != null && retrievedUserName.isNotEmpty) {
+        userName = retrievedUserName;
+      } else {
+        // Si no hay nombre en localStorage, usar el displayName de Firebase o email
+        userName = currentUser.displayName ?? 
+                  currentUser.email?.split('@').first ?? 
+                  'Usuario';
+      }
+    } catch (e) {
+      print('Error obteniendo nombre de usuario: $e');
+      // Usar fallback de Firebase
+      userName = currentUser.displayName ?? 
+                currentUser.email?.split('@').first ?? 
+                'Usuario';
+    }
+    
     final report = AccessibilityReportModel(
       id: '', // Se generará en el servicio
       userId: currentUser.uid, // Usar el ID real del usuario autenticado
+      userName: userName, // Usar el nombre obtenido de shared preferences
       comments: comment,
       level: level,
     );

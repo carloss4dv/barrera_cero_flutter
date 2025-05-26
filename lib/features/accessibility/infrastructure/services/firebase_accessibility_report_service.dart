@@ -53,12 +53,11 @@ class FirebaseAccessibilityReportService implements IAccessibilityReportService 
       data['created_at'] = FieldValue.serverTimestamp();
       data['updated_at'] = FieldValue.serverTimestamp();
 
-      await reportRef.set(data);
-
-      // Crear el reporte con el ID generado
+      await reportRef.set(data);      // Crear el reporte con el ID generado
       final newReport = AccessibilityReportModel(
         id: reportRef.id,
         userId: report.userId,
+        userName: report.userName,
         comments: report.comments,
         level: report.level,
       );

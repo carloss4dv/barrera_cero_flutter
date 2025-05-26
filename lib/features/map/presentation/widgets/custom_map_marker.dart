@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:result_dart/result_dart.dart';
+import 'package:get_it/get_it.dart';
 import '../../domain/marker_model.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 import '../../../accessibility/domain/accessibility_report_model.dart';
 import '../../../accessibility/domain/i_accessibility_report_service.dart';
-import '../../../accessibility/infrastructure/services/mock_accessibility_report_service.dart';
 import '../../infrastructure/providers/map_filters_provider.dart';
 
 class CustomMapMarker extends StatelessWidget {
   final MarkerModel marker;
   final bool isSelected;
   final VoidCallback onTap;
-  // Add a static instance of the report service to get accessibility levels
-  static final IAccessibilityReportService _reportService = MockAccessibilityReportService();
+  // Get service from dependency injection instead of static instance
+  static final IAccessibilityReportService _reportService = GetIt.instance<IAccessibilityReportService>();
 
   const CustomMapMarker({
     Key? key,
@@ -126,7 +125,6 @@ class CustomMapMarker extends StatelessWidget {
       ),
     );
   }
-
   String _getMarkerTypeText() {
     switch (marker.type) {
       case MarkerType.pointOfInterest:
@@ -135,20 +133,18 @@ class CustomMapMarker extends StatelessWidget {
         return 'Destino';
       case MarkerType.currentLocation:
         return 'Actual';
-      default:
-        return 'Punto';
     }
   }
-
   BoxShape _getMarkerShape() {
     switch (marker.type) {
       case MarkerType.currentLocation:
         return BoxShape.circle;
-      default:
+      case MarkerType.pointOfInterest:
+        return BoxShape.circle;
+      case MarkerType.destination:
         return BoxShape.circle;
     }
   }
-
   IconData _getMarkerIcon() {
     switch (marker.type) {
       case MarkerType.pointOfInterest:
@@ -157,8 +153,6 @@ class CustomMapMarker extends StatelessWidget {
         return Icons.location_on;
       case MarkerType.currentLocation:
         return Icons.my_location;
-      default:
-        return Icons.place;
     }
   }
 
