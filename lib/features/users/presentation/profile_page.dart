@@ -205,13 +205,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
+                              children: [                                Text(
                                   '${_user!.contributionPoints} B-points',
                                   style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.amber,
+                                    color: Colors.black,
                                   ),
                                 ),
                                 const Text(

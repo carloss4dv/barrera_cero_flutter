@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../services/user_service.dart';
 import '../../../auth/service/auth_service.dart';
-import '../../domain/models/user.dart';
 
 class BPointsWidget extends StatefulWidget {
   final bool showCompact;
@@ -71,13 +70,12 @@ class _BPointsWidgetState extends State<BPointsWidget> {
               size: 16,
               color: Colors.amber.shade700,
             ),
-            const SizedBox(width: 4),
-            Text(
+            const SizedBox(width: 4),            Text(
               '$_currentPoints',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.amber.shade700,
+                color: Colors.black,
               ),
             ),
           ],

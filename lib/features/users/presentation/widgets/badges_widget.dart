@@ -268,12 +268,12 @@ class BadgesWidget extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
-          Text(
+          const SizedBox(height: 4),          Text(
             '${badge.requiredPoints} pts',
             style: TextStyle(
               fontSize: 12,
-              color: isEarned ? badge.color.withOpacity(0.7) : Colors.grey.shade500,
+              fontWeight: isEarned ? FontWeight.bold : FontWeight.normal,
+              color: isEarned ? Colors.black : Colors.grey.shade500,
             ),
             textAlign: TextAlign.center,
           ),
