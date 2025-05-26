@@ -1,36 +1,76 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import '../../domain/accessibility_report_model.dart';
 
-part 'accessibility_report_dto.freezed.dart';
-part 'accessibility_report_dto.g.dart';
+class AccessibilityReportDto {
+  final String id;
+  final String userId;
+  final String comments;
+  final AccessibilityLevel level;
 
-@freezed
-class AccessibilityReportDto with _$AccessibilityReportDto {
-  const factory AccessibilityReportDto({
-    @Default('') String id,
-    @JsonKey(name: 'user_id')
-    @Default('') String userId,
-    @Default('') String comments,
-    @JsonKey(name: 'accessibility_level')
-    @Default(AccessibilityLevel.medium) AccessibilityLevel level,
-  }) = _AccessibilityReportDto;
+  const AccessibilityReportDto({
+    this.id = '',
+    required this.userId,
+    required this.comments,
+    required this.level,
+  });
 
-  factory AccessibilityReportDto.fromJson(Map<String, dynamic> json) =>
-      _$AccessibilityReportDtoFromJson(json);
+  factory AccessibilityReportDto.fromJson(Map<String, dynamic> json) {
+    return AccessibilityReportDto(
+      id: json['id'] as String? ?? '',
+      userId: json['user_id'] as String? ?? '',
+      comments: json['comments'] as String? ?? '',
+      level: _stringToAccessibilityLevel(json['accessibility_level'] as String? ?? 'medium'),
+    );
+  }
 
-  factory AccessibilityReportDto.fromDomain(AccessibilityReportModel model) => AccessibilityReportDto(
-        id: model.id,
-        userId: model.userId,
-        comments: model.comments,
-        level: model.level,
-      );
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'comments': comments,
+      'accessibility_level': _accessibilityLevelToString(level),
+    };
+  }
+
+  // Método para convertir desde el modelo de dominio
+  factory AccessibilityReportDto.fromDomain(AccessibilityReportModel model) {
+    return AccessibilityReportDto(
+      id: model.id,
+      userId: model.userId,
+      comments: model.comments,
+      level: model.level,
+    );
+  }
+
+  // Método para convertir al modelo de dominio
+  AccessibilityReportModel toDomain() {
+    return AccessibilityReportModel(
+      id: id,
+      userId: userId,
+      comments: comments,
+      level: level,
+    );
+  }
+
+  static AccessibilityLevel _stringToAccessibilityLevel(String levelString) {
+    switch (levelString.toLowerCase()) {
+      case 'good':
+        return AccessibilityLevel.good;
+      case 'bad':
+        return AccessibilityLevel.bad;
+      case 'medium':
+      default:
+        return AccessibilityLevel.medium;
+    }
+  }
+
+  static String _accessibilityLevelToString(AccessibilityLevel level) {
+    switch (level) {
+      case AccessibilityLevel.good:
+        return 'good';
+      case AccessibilityLevel.medium:
+        return 'medium';
+      case AccessibilityLevel.bad:
+        return 'bad';
+    }
+  }
 }
-
-extension AccessibilityReportDtoX on AccessibilityReportDto {
-  AccessibilityReportModel toDomain() => AccessibilityReportModel(
-        id: id,
-        userId: userId,
-        comments: comments,
-        level: level,
-      );
-} 

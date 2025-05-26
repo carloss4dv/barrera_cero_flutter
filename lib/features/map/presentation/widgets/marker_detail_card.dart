@@ -660,11 +660,20 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       ),
     );
   }
-  
-  Future<void> _submitReport(AccessibilityLevel level, String comment) async {
+    Future<void> _submitReport(AccessibilityLevel level, String comment) async {
+    final authService = GetIt.instance<AuthService>();
+    final currentUser = authService.currentUser;
+    
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes iniciar sesión para enviar reportes')),
+      );
+      return;
+    }
+    
     final report = AccessibilityReportModel(
       id: '', // Se generará en el servicio
-      userId: 'current_user', // En producción, obtendríamos el ID del usuario actual
+      userId: currentUser.uid, // Usar el ID real del usuario autenticado
       comments: comment,
       level: level,
     );
