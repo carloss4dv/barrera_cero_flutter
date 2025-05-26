@@ -300,7 +300,6 @@ class _BadgeUnlockedAnimationState extends State<BadgeUnlockedAnimation>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  late Animation<double> _rotationAnimation;
   late Animation<double> _opacityAnimation;
 
   @override
@@ -309,22 +308,12 @@ class _BadgeUnlockedAnimationState extends State<BadgeUnlockedAnimation>
     _controller = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(
+    );    _scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _controller,
       curve: const Interval(0.0, 0.5, curve: Curves.elasticOut),
-    ));
-
-    _rotationAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.2, 0.7, curve: Curves.easeInOut),
     ));
 
     _opacityAnimation = Tween<double>(
@@ -350,65 +339,61 @@ class _BadgeUnlockedAnimationState extends State<BadgeUnlockedAnimation>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) {
-        return FadeTransition(
+      builder: (context, child) {        return FadeTransition(
           opacity: _opacityAnimation,
           child: ScaleTransition(
             scale: _scaleAnimation,
-            child: RotationTransition(
-              turns: _rotationAnimation,
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: widget.badge.color.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.badge.color.withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 5,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: widget.badge.color.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.badge.color.withOpacity(0.3),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    widget.badge.assetPath,
+                    width: 64,
+                    height: 64,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '¡Nueva insignia desbloqueada!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Image.asset(
-                      widget.badge.assetPath,
-                      width: 64,
-                      height: 64,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.badge.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      '¡Nueva insignia desbloqueada!',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                      textAlign: TextAlign.center,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.badge.description,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.badge.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.badge.description,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           ),
