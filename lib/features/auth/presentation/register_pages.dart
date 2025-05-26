@@ -185,8 +185,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   return null;
                                 },
                               ),
-                              const SizedBox(height: 20),
-                              DropdownButtonFormField<MobilityType>(
+                              const SizedBox(height: 20),                              DropdownButtonFormField<MobilityType>(
                                 value: _selectedMobilityType,
                                 decoration: InputDecoration(
                                   labelText: 'Tipo de movilidad',
@@ -197,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 items: MobilityType.values.map((type) {
                                   return DropdownMenuItem(
                                     value: type,
-                                    child: Text(type.toString().split('.').last),
+                                    child: Text(type.displayName),
                                   );
                                 }).toList(),
                                 onChanged: (value) {

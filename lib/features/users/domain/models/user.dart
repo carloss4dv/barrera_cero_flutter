@@ -76,6 +76,28 @@ enum MobilityType {
   other
 }
 
+// Extensión para traducir los tipos de movilidad al español
+extension MobilityTypeExtension on MobilityType {
+  String get displayName {
+    switch (this) {
+      case MobilityType.wheelchair:
+        return 'Silla de ruedas';
+      case MobilityType.cane:
+        return 'Bastón';
+      case MobilityType.walker:
+        return 'Andador';
+      case MobilityType.visuallyImpaired:
+        return 'Discapacidad visual';
+      case MobilityType.hearingImpaired:
+        return 'Discapacidad auditiva';
+      case MobilityType.noAssistance:
+        return 'Sin asistencia';
+      case MobilityType.other:
+        return 'Otro';
+    }
+  }
+}
+
 enum AccessibilityPreference {
   ramps,
   elevators,
@@ -122,4 +144,4 @@ class Badge {
       earnedAt: (map['earnedAt'] as Timestamp).toDate(),
     );
   }
-} 
+}

@@ -323,8 +323,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<MobilityType>(
+                      const SizedBox(height: 16),                      DropdownButtonFormField<MobilityType>(
                         value: _selectedMobilityType,
                         decoration: const InputDecoration(
                           labelText: 'Tipo de Movilidad',
@@ -333,7 +332,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         items: MobilityType.values.map((type) {
                           return DropdownMenuItem(
                             value: type,
-                            child: Text(type.toString().split('.').last),
+                            child: Text(type.displayName),
                           );
                         }).toList(),
                         onChanged: _isEditing
