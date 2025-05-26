@@ -69,7 +69,6 @@ class FirebaseAccessibilityReportService implements IAccessibilityReportService 
       );
     }
   }
-
   @override
   Future<ResultDart<AccessibilityLevel, AccessibilityReportException>> 
       getAccessibilityLevelForMarker(String markerId) async {
@@ -87,9 +86,11 @@ class FirebaseAccessibilityReportService implements IAccessibilityReportService 
         }
       });
       
-      // Si no hay reportes, devolver nivel medio por defecto
+      // Si no hay reportes, devolver un error indicando que no hay reportes
       if (maxCount == 0) {
-        return Success(AccessibilityLevel.medium);
+        return Failure(
+          AccessibilityReportException('No hay reportes para este marcador'),
+        );
       }
       
       return Success(predominantLevel);

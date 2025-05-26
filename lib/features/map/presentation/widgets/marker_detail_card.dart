@@ -225,8 +225,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
               child: ListView(
                 controller: scrollController,
                 padding: EdgeInsets.zero,
-                children: [
-                  // Indicador de arrastre
+                children: [                  // Indicador de arrastre
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -234,17 +233,16 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                         width: 40,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: _getLevelColor(_getPredominantLevel()),
+                          color: _getIconBackgroundColor(),
                           borderRadius: BorderRadius.circular(2.5),
                         ),
                       ),
                     ),
                   ),
-                  
-                  // Sección superior con icono y nombre
+                    // Sección superior con icono y nombre
                   ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: isHighContrastMode ? accentColor : _getLevelColor(_getPredominantLevel()),
+                      backgroundColor: isHighContrastMode ? accentColor : _getIconBackgroundColor(),
                       child: Icon(
                         Icons.accessible,
                         color: isHighContrastMode ? Colors.black : Colors.white,
@@ -725,7 +723,6 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       },
     );
   }
-
   Color _getLevelColor(AccessibilityLevel level) {
     switch (level) {
       case AccessibilityLevel.good:
@@ -735,6 +732,18 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       case AccessibilityLevel.bad:
         return Colors.red;
     }
+  }
+  
+  /// Obtiene el color de fondo para el ícono del lugar
+  /// Devuelve gris si no hay reportes, o el color del nivel predominante si los hay
+  Color _getIconBackgroundColor() {
+    if (_reports == null || _reports!.isEmpty) {
+      // Sin reportes - mostrar gris desaturado
+      return Colors.grey.shade400;
+    }
+    
+    // Con reportes - mostrar color del nivel predominante
+    return _getLevelColor(_getPredominantLevel());
   }
   
   String _getLevelText(AccessibilityLevel level) {

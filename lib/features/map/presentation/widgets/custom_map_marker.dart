@@ -154,9 +154,7 @@ class CustomMapMarker extends StatelessWidget {
       case MarkerType.currentLocation:
         return Icons.my_location;
     }
-  }
-
-  Future<Color> _getMarkerColorAsync() async {
+  }  Future<Color> _getMarkerColorAsync() async {
     // Si el marcador está seleccionado, usar un color destacado
     if (isSelected) {
       return Colors.deepOrange;
@@ -167,8 +165,32 @@ class CustomMapMarker extends StatelessWidget {
       return Colors.red;
     }
 
-    // Primero comprobar si tenemos un accessibilityScore en los metadatos
-    // y usar eso para determinar el color
+    // PRIMERO verificar si hay reportes de la comunidad en Firebase
+    final reportsResult = await _reportService.getReportsForMarker(marker.id);
+    if (reportsResult.isSuccess()) {
+      final reports = reportsResult.getOrThrow();
+      
+      // Si no hay reportes en Firebase, usar color gris desaturado
+      if (reports.isEmpty) {
+        return _getDesaturatedColor(marker.color);
+      }
+      
+      // Si hay reportes, obtener el nivel predominante y usar esos colores
+      final result = await _reportService.getAccessibilityLevelForMarker(marker.id);
+      if (result.isSuccess()) {
+        // Asignar colores según el nivel de accesibilidad de los reportes
+        switch (result.getOrThrow()) {
+          case AccessibilityLevel.good:
+            return Colors.green;
+          case AccessibilityLevel.medium:
+            return Colors.orange;
+          case AccessibilityLevel.bad:
+            return Colors.red;
+        }
+      }
+    }
+
+    // FALLBACK: Si no se pueden obtener reportes de Firebase, usar el accessibilityScore de metadatos
     final score = marker.metadata.accessibilityScore;
     if (score > 0) {
       if (score >= 4) {
@@ -179,22 +201,15 @@ class CustomMapMarker extends StatelessWidget {
         return Colors.red; // Mala accesibilidad (1)
       }
     }
-
-    // Como respaldo, intentar obtener el nivel de accesibilidad del servicio
-    final result = await _reportService.getAccessibilityLevelForMarker(marker.id);
-    if (result.isSuccess()) {
-      // Asignar colores según el nivel de accesibilidad
-      switch (result.getOrThrow()) {
-        case AccessibilityLevel.good:
-          return Colors.green;
-        case AccessibilityLevel.medium:
-          return Colors.orange;
-        case AccessibilityLevel.bad:
-          return Colors.red;
-      }
-    }
     
-    // Si no hay reportes o hay un error, usar el color definido en el modelo
-    return marker.color;
+    // Si no hay reportes ni score, usar color gris desaturado
+    return _getDesaturatedColor(marker.color);
+  }
+    /// Reduce la saturación de un color para crear un efecto gris
+  /// manteniendo el tono original del color
+  Color _getDesaturatedColor(Color originalColor) {
+    final HSLColor hsl = HSLColor.fromColor(originalColor);
+    // Reducir la saturación mucho más y ajustar la luminosidad para hacerlo notablemente gris
+    return hsl.withSaturation(0.1).withLightness(0.7).toColor();
   }
 } 
