@@ -94,10 +94,10 @@ class CommunityValidationModel with _$CommunityValidationModel {
   bool isPending() => status == ValidationStatus.pending;
   bool isValidated() => status == ValidationStatus.approved;
   bool isRejected() => status == ValidationStatus.rejected;
-
   double getProgress() {
-    final totalVotes = positiveVotes + negativeVotes;
-    return totalVotes / totalVotesNeeded;
+    // Calculando el progreso basado en la diferencia entre votos positivos y negativos
+    final voteDifference = positiveVotes - negativeVotes;
+    return voteDifference / totalVotesNeeded;
   }
 
   String getQuestionText() {

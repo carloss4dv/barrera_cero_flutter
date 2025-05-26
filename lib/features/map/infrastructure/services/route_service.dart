@@ -292,12 +292,12 @@ class RouteService {
         status: ValidationStatus.pending,
         votedUserIds: [],
       ),
-    );
-
+    );    // Comparar votos positivos y negativos para determinar si hay escaleras
     final hasStairs = stairsValidation.negativeVotes > stairsValidation.positiveVotes;
     print('Verificación de escaleras: ${hasStairs ? "Sí" : "No"}');
     print('- Votos positivos: ${stairsValidation.positiveVotes}');
     print('- Votos negativos: ${stairsValidation.negativeVotes}');
+    print('- Diferencia: ${stairsValidation.positiveVotes - stairsValidation.negativeVotes}');
     
     return hasStairs;
   }

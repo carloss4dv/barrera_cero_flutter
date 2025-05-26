@@ -128,18 +128,16 @@ class MockCommunityValidationService implements ICommunityValidationService {
       return Failure(Exception('Error al crear validación: $e'));
     }
   }
-
   ValidationStatus _calculateNewStatus(int positiveVotes, int negativeVotes, int totalNeeded) {
-    final totalVotes = positiveVotes + negativeVotes;
-    if (totalVotes < totalNeeded) {
-      return ValidationStatus.pending;
-    }
+    // Calcular basado en la diferencia entre votos positivos y negativos
+    final voteDifference = positiveVotes - negativeVotes;
     
-    final positivePercentage = positiveVotes / totalVotes;
-    if (positivePercentage >= 0.7) {
+    if (voteDifference >= totalNeeded) {
       return ValidationStatus.validated;
-    } else {
+    } else if (voteDifference <= -totalNeeded) {
       return ValidationStatus.rejected;
+    } else {
+      return ValidationStatus.pending;
     }
   }
 } 

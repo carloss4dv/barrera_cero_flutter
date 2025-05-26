@@ -832,21 +832,86 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
               ),
             ),
           ),
-        const SizedBox(height: 8),
-        LinearProgressIndicator(
-          value: validation?.getProgress() ?? 0,
-          backgroundColor: Colors.grey[200],
-          valueColor: AlwaysStoppedAnimation<Color>(
-            (validation?.getProgress() ?? 0) >= 0.7 ? Colors.green : Colors.orange,
+        const SizedBox(height: 8),        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            height: 8,
+            child: Stack(
+              children: [
+                // Fondo gris para toda la barra
+                Container(
+                  width: double.infinity,
+                  color: Colors.grey[200],
+                ),
+                // Barra de diferencia positiva (verde) o negativa (roja)
+                Builder(
+                  builder: (context) {
+                    final positiveVotes = validation?.positiveVotes ?? 0;
+                    final negativeVotes = validation?.negativeVotes ?? 0;
+                    final voteDifference = positiveVotes - negativeVotes;
+                    final totalNeeded = validation?.totalVotesNeeded ?? 10;
+                    
+                    // Calculamos un factor de proporción
+                    double progress = voteDifference.abs() / totalNeeded;
+                    // Limitamos el progreso a un máximo de 1.0 (100%)
+                    progress = progress.clamp(0.0, 1.0);
+                    
+                    return FractionallySizedBox(
+                      alignment: voteDifference >= 0 ? Alignment.centerLeft : Alignment.centerRight,
+                      widthFactor: progress,
+                      child: Container(
+                        color: voteDifference >= 0 ? Colors.green : Colors.red,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          '${validation?.positiveVotes ?? 0} de ${validation?.totalVotesNeeded ?? 10} votos necesarios para verificación',
-          style: TextStyle(
-            fontSize: 12,
-            color: textColor.withOpacity(0.5),
-          ),
+        const SizedBox(height: 4),        Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Positivos: ${validation?.positiveVotes ?? 0}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Diferencia: ${(validation?.positiveVotes ?? 0) - (validation?.negativeVotes ?? 0)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: (validation?.positiveVotes ?? 0) >= (validation?.negativeVotes ?? 0) ? 
+                      Colors.green : Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Negativos: ${validation?.negativeVotes ?? 0}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.red,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Se necesitan 10 votos de diferencia para validar',
+              style: TextStyle(
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+                color: textColor.withOpacity(0.6),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ],
     );

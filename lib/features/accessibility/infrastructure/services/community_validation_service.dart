@@ -68,17 +68,14 @@ class CommunityValidationService implements ICommunityValidationService {
             positiveVotes: isPositive ? validation.positiveVotes + 1 : validation.positiveVotes,
             negativeVotes: !isPositive ? validation.negativeVotes + 1 : validation.negativeVotes,
             votedUserIds: [...validation.votedUserIds, userId],
-          );
-
-          // Actualizar estado basado en votos
-          final totalVotes = validation.positiveVotes + validation.negativeVotes;
-          if (totalVotes >= validation.totalVotesNeeded) {
-            final positiveRatio = validation.positiveVotes / totalVotes;
-            validation = validation.copyWith(
-              status: positiveRatio >= 0.7 
-                ? ValidationStatus.approved 
-                : ValidationStatus.rejected,
-            );
+          );          // Actualizar estado basado en la diferencia entre votos positivos y negativos
+          final voteDifference = validation.positiveVotes - validation.negativeVotes;
+          if (voteDifference >= validation.totalVotesNeeded) {
+            validation = validation.copyWith(status: ValidationStatus.approved);
+          } else if (voteDifference <= -validation.totalVotesNeeded) {
+            validation = validation.copyWith(status: ValidationStatus.rejected);
+          } else {
+            validation = validation.copyWith(status: ValidationStatus.pending);
           }
         }
 
