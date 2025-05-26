@@ -3,6 +3,7 @@ import '../../domain/forum_message_model.dart';
 import '../../domain/i_forum_service.dart';
 import 'package:get_it/get_it.dart';
 import '../../../auth/service/auth_service.dart';
+import '../../../../services/local_user_storage_service.dart';
 
 class ForumScreen extends StatefulWidget {
   const ForumScreen({Key? key}) : super(key: key);
@@ -72,13 +73,12 @@ class _ForumScreenState extends State<ForumScreen> {
     print('- Email: ${user.email}');
     print('- DisplayName: ${user.displayName}');
     
-    final userName = user.email ?? 'Usuario';
-    print('- Nombre a usar: $userName');
-
-    final result = await _forumService.addMessage(
+    // Obtener el nombre del usuario usando la función helper
+    final userName = await _getUserName(user);
+    print('- Nombre a usar: $userName');final result = await _forumService.addMessage(
       _messageController.text,
       user.uid, // ID de usuario real
-      userName, // Usar email del usuario
+      userName, // Usar nombre del usuario
     );
 
     result.fold(
@@ -146,11 +146,14 @@ class _ForumScreenState extends State<ForumScreen> {
                                   const SnackBar(content: Text('Debes iniciar sesión para comentar')),
                                 );
                                 return;
-                              }                              final result = await _forumService.addComment(
+                              }                              // Obtener el nombre del usuario usando la función helper
+                              final userName = await _getUserName(user);
+
+                              final result = await _forumService.addComment(
                                 message.id,
                                 comment,
                                 user.uid, // ID de usuario real
-                                user.email ?? 'Usuario', // Usar email del usuario
+                                userName, // Usar nombre del usuario
                               );
 
                               result.fold(
@@ -197,8 +200,28 @@ class _ForumScreenState extends State<ForumScreen> {
                       ),
           ),
         ],
-      ),
-    );
+      ),    );
+  }
+
+  // Función helper para obtener el nombre del usuario
+  Future<String> _getUserName(user) async {
+    try {
+      final retrievedUserName = await localUserStorage.getUserName();
+      if (retrievedUserName != null && retrievedUserName.isNotEmpty) {
+        return retrievedUserName;
+      } else {
+        // Si no hay nombre en localStorage, usar el displayName de Firebase o parte del email
+        return user.displayName ?? 
+               user.email?.split('@').first ?? 
+               'Usuario';
+      }
+    } catch (e) {
+      print('Error obteniendo nombre de usuario: $e');
+      // Usar fallback de Firebase
+      return user.displayName ?? 
+             user.email?.split('@').first ?? 
+             'Usuario';
+    }
   }
 
   @override
