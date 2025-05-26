@@ -2,10 +2,14 @@ import 'package:result_type/result_type.dart';
 import 'package:latlong2/latlong.dart';
 import '../../domain/marker_model.dart';
 import '../../domain/i_marker_service.dart';
-import '../../domain/marker_metadata.dart';
-import 'dart:math';
+import 'geolocation_service.dart';
 
 class MarkerService implements IMarkerService {
+  final GeolocationService _geolocationService;
+
+  MarkerService({GeolocationService? geolocationService}) 
+      : _geolocationService = geolocationService ?? GeolocationService();
+
   // Lista de marcadores de prueba en Zaragoza
   final List<MarkerModel> _mockMarkers = [
     /*
@@ -238,12 +242,6 @@ class MarkerService implements IMarkerService {
     */
   ];
 
-  // Ubicación actual simulada en Zaragoza (Plaza del Pilar)
-  final MarkerModel _currentLocation = MarkerModel.currentLocation(
-    id: 'current_location',
-    position: LatLng(41.6560, -0.8773), // Plaza del Pilar
-  );
-
   @override
   Future<Result<List<MarkerModel>, MarkerError>> getNearbyMarkers({
     required double latitude,
@@ -276,25 +274,22 @@ class MarkerService implements IMarkerService {
   @override
   Future<Result<MarkerModel, MarkerError>> getCurrentLocation() async {
     try {
-      // Simulamos un pequeño retraso
-      await Future.delayed(const Duration(milliseconds: 300));
+      print('Obteniendo ubicación real del dispositivo...');
       
-      // Simulamos una ubicación actual aleatoria cercana a Zaragoza
-      final Random random = Random();
-      final double latVariation = (random.nextDouble() - 0.5) * 0.01;
-      final double lngVariation = (random.nextDouble() - 0.5) * 0.01;
+      // Usar el servicio de geolocalización para obtener la ubicación real
+      final result = await _geolocationService.getCurrentLocationAsMarker();
       
-      final newLocation = MarkerModel.currentLocation(
-        id: 'current_location',
-        position: LatLng(
-          _currentLocation.position.latitude + latVariation,
-          _currentLocation.position.longitude + lngVariation,
-        ),
-      );
-      
-      return Success(newLocation);
+      if (result.isSuccess) {
+        final marker = result.success;
+        print('Ubicación real obtenida: lat=${marker.position.latitude}, lng=${marker.position.longitude}');
+        return Success(marker);
+      } else {
+        print('Error al obtener ubicación real: ${result.failure}');
+        return Failure(result.failure);
+      }
     } catch (e) {
-      return Failure(const MarkerError.locationServiceDisabled());
+      print('Error inesperado al obtener ubicación: $e');
+      return Failure(MarkerError.serverError('Error al obtener la ubicación: $e'));
     }
   }
 

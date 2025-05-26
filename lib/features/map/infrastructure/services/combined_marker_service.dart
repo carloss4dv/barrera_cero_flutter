@@ -1,5 +1,4 @@
 import 'package:result_type/result_type.dart';
-import 'package:latlong2/latlong.dart';
 import '../../domain/i_marker_service.dart';
 import '../../domain/marker_model.dart';
 import 'marker_service.dart';
@@ -128,13 +127,13 @@ class CombinedMarkerService implements IMarkerService {
 
   @override
   Future<Result<MarkerModel, MarkerError>> getCurrentLocation() async {
-    print('\nObteniendo ubicación actual...');
-    // Usar el servicio mock para la ubicación actual ya que Firestore no lo implementa
+    print('\nObteniendo ubicación real del dispositivo...');
+    // Usar el servicio mock actualizado que ahora usa ubicación real
     final result = await _mockService.getCurrentLocation();
     if (result.isSuccess) {
-      print('Ubicación actual obtenida: ${result.success.position.latitude}, ${result.success.position.longitude}');
+      print('Ubicación real obtenida: ${result.success.position.latitude}, ${result.success.position.longitude}');
     } else {
-      print('Error al obtener la ubicación actual');
+      print('Error al obtener la ubicación real: ${result.failure}');
     }
     return result;
   }
