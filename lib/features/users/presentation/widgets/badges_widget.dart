@@ -141,16 +141,15 @@ class BadgesWidget extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        children: [          Row(
             children: [
               Image.asset(
                 nextBadge.assetPath,
-                width: 24,
-                height: 24,
-                color: Colors.grey.shade400,
+                width: 56,
+                height: 56,
+                // Quitar el filtro gris para mostrar la imagen real
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,14 +207,13 @@ class BadgesWidget extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 8),
-        GridView.builder(
+        const SizedBox(height: 8),        GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
             childAspectRatio: 0.8,
           ),
           itemCount: allBadges.length,
@@ -227,11 +225,9 @@ class BadgesWidget extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  Widget _buildBadgeCard(BadgeInfo badge, {required bool isEarned}) {
+  }  Widget _buildBadgeCard(BadgeInfo badge, {required bool isEarned}) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isEarned ? badge.color.withOpacity(0.1) : Colors.grey.shade100,
         borderRadius: BorderRadius.circular(12),
@@ -240,29 +236,27 @@ class BadgesWidget extends StatelessWidget {
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+        mainAxisSize: MainAxisSize.min,        children: [
           Image.asset(
             badge.assetPath,
-            width: 32,
-            height: 32,
-            color: isEarned ? null : Colors.grey.shade400,
-          ),
-          const SizedBox(height: 4),
+            width: 64,
+            height: 64,
+            color: isEarned ? null : Colors.grey.shade400,          ),
+          const SizedBox(height: 8),
           Text(
             badge.name,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: isEarned ? badge.color : Colors.grey.shade600,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             '${badge.requiredPoints} pts',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               color: isEarned ? badge.color.withOpacity(0.7) : Colors.grey.shade500,
             ),
             textAlign: TextAlign.center,
@@ -358,11 +352,10 @@ class _BadgeUnlockedAnimationState extends State<BadgeUnlockedAnimation>
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Image.asset(
+                children: [                  Image.asset(
                     widget.badge.assetPath,
-                    width: 64,
-                    height: 64,
+                    width: 80,
+                    height: 80,
                   ),
                   const SizedBox(height: 12),
                   const Text(

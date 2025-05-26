@@ -25,10 +25,9 @@ class BadgeInfo {
 }
 
 class BadgeSystem {
-  static const List<BadgeInfo> _badges = [
-    BadgeInfo(
+  static const List<BadgeInfo> _badges = [    BadgeInfo(
       type: BadgeType.contributor,
-      name: 'Contributor',
+      name: 'Contribuidor',
       description: 'Has contribuido con la comunidad',
       assetPath: 'assets/badges/contributor.png',
       requiredPoints: 100,
@@ -36,7 +35,7 @@ class BadgeSystem {
     ),
     BadgeInfo(
       type: BadgeType.champion,
-      name: 'Champion',
+      name: 'Campeón',
       description: 'Eres un campeón de la accesibilidad',
       assetPath: 'assets/badges/champion.png',
       requiredPoints: 1000,
@@ -44,7 +43,7 @@ class BadgeSystem {
     ),
     BadgeInfo(
       type: BadgeType.legend,
-      name: 'Legend',
+      name: 'Leyenda',
       description: 'Eres una leyenda de la accesibilidad',
       assetPath: 'assets/badges/legend.png',
       requiredPoints: 10000,
