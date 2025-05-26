@@ -17,10 +17,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _userService = UserService();
-  bool _isLoading = false;
-  String? _errorMessage;
+  bool _isLoading = false;  String? _errorMessage;
   MobilityType _selectedMobilityType = MobilityType.noAssistance;
-  final List<AccessibilityPreference> _selectedPreferences = [];
 
   @override
   void dispose() {

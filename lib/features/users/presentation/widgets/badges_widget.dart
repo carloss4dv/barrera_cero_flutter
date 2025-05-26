@@ -236,12 +236,28 @@ class BadgesWidget extends StatelessWidget {
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,        children: [
-          Image.asset(
-            badge.assetPath,
-            width: 64,
-            height: 64,
-            color: isEarned ? null : Colors.grey.shade400,          ),
+        mainAxisSize: MainAxisSize.min,        children: [          isEarned
+            ? Image.asset(
+                badge.assetPath,
+                width: 64,
+                height: 64,
+              )
+            : Opacity(
+                opacity: 0.6,
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.matrix([
+                    0.6, 0.2, 0.2, 0, 0,  // Red channel - reduced saturation
+                    0.2, 0.6, 0.2, 0, 0,  // Green channel - reduced saturation
+                    0.2, 0.2, 0.6, 0, 0,  // Blue channel - reduced saturation
+                    0,   0,   0,   1, 0,  // Alpha channel - no change
+                  ]),
+                  child: Image.asset(
+                    badge.assetPath,
+                    width: 64,
+                    height: 64,
+                  ),
+                ),
+              ),
           const SizedBox(height: 8),
           Text(
             badge.name,
