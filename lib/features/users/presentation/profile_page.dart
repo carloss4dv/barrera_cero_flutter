@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../domain/models/user.dart';
 import '../services/user_service.dart';
 import '../../auth/service/auth_service.dart';
+import 'widgets/badges_widget.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -294,45 +295,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           ],
                         ),
                       ),
+                        const SizedBox(height: 16),
                       
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Insignias',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      // Sistema de insignias nuevo
+                      BadgesWidget(
+                        bPoints: _user!.contributionPoints,
+                        showProgress: true,
                       ),
-                      const SizedBox(height: 8),
-                      _user!.badges.isEmpty
-                          ? Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.emoji_events, color: Colors.grey),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'No tienes insignias aún. ¡Sigue contribuyendo!',
-                                    style: TextStyle(color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : Wrap(
-                              spacing: 8,
-                              children: _user!.badges.map((badge) {
-                                return Chip(
-                                  label: Text(badge.name),
-                                  avatar: CircleAvatar(
-                                    backgroundImage: NetworkImage(badge.iconUrl),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
                     ],
                   ),
                 ),

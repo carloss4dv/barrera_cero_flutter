@@ -11,6 +11,9 @@ import '../../../accessibility/domain/i_community_validation_service.dart';
 import '../../application/marker_cubit.dart';
 import '../../../auth/service/auth_service.dart';
 import '../../../users/presentation/widgets/b_points_widget.dart';
+import '../../../users/domain/models/badge_system.dart';
+import '../../../users/presentation/widgets/badges_widget.dart';
+import '../../../users/services/user_service.dart';
 
 class MarkerDetailCard extends StatefulWidget {
   final MarkerModel marker;
@@ -145,6 +148,30 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
           color: Colors.transparent,
           child: BPointsEarnedAnimation(
             pointsEarned: 20,
+            onAnimationComplete: () {
+              _overlayEntry?.remove();
+              _overlayEntry = null;
+            },
+          ),
+        ),
+      ),
+    );
+      Overlay.of(context).insert(_overlayEntry!);
+  }
+
+  void _showBadgeUnlockedAnimation(BadgeInfo badge) {
+    if (!mounted) return;
+    
+    _overlayEntry?.remove();
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).size.height * 0.2,
+        left: MediaQuery.of(context).size.width * 0.1,
+        right: MediaQuery.of(context).size.width * 0.1,
+        child: Material(
+          color: Colors.transparent,
+          child: BadgeUnlockedAnimation(
+            badge: badge,
             onAnimationComplete: () {
               _overlayEntry?.remove();
               _overlayEntry = null;
@@ -915,8 +942,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         ),
       ],
     );
-  }
-  Future<void> _handleVote(ValidationQuestionType questionType, bool isPositive) async {
+  }  Future<void> _handleVote(ValidationQuestionType questionType, bool isPositive) async {
     try {
       // Obtener el usuario actual del servicio de autenticación
       final authService = GetIt.instance<AuthService>();
@@ -931,29 +957,53 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         return;
       }
 
+      // Obtener puntos actuales del usuario antes de votar
+      final userService = UserService();
+      final userBefore = await userService.getUserById(currentUser.uid);
+      final oldPoints = userBefore?.contributionPoints ?? 0;
+
       final result = await _validationService.addVote(
         widget.marker.id,
         questionType,
         isPositive,
         currentUser.uid, // Usar ID real del usuario
-      );      result.fold(
-        (success) {
+      );
+
+      result.fold(
+        (success) async {
           setState(() {
             _validations = _validations?.map((v) => 
               v.questionType == questionType ? success : v
             ).toList() ?? [success];
           });
           
+          // Verificar si se desbloqueó una nueva insignia
+          final userAfter = await userService.getUserById(currentUser.uid);
+          final newPoints = userAfter?.contributionPoints ?? 0;
+          final newBadge = BadgeSystem.checkNewBadgeUnlocked(oldPoints, newPoints);
+          
           // Mostrar animación de B-points
           _showBPointsAnimation();
           
+          // Si hay una nueva insignia, mostrar su animación después de los B-points
+          if (newBadge != null) {
+            // Esperar un poco para que termine la animación de B-points
+            Future.delayed(const Duration(milliseconds: 1500), () {
+              _showBadgeUnlockedAnimation(newBadge);
+            });
+          }
+          
           // Mostrar mensaje de éxito con información de puntos
           if (mounted) {
+            final message = newBadge != null 
+                ? '¡Voto registrado! Has ganado 20 B-points y desbloqueado la insignia ${newBadge.name}!'
+                : '¡Voto registrado! Has ganado 20 B-points';
+                
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('¡Voto registrado! Has ganado 20 B-points'),
+              SnackBar(
+                content: Text(message),
                 backgroundColor: Colors.green,
-                duration: Duration(seconds: 3),
+                duration: Duration(seconds: newBadge != null ? 5 : 3),
               ),
             );
           }
