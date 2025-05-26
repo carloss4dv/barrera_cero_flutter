@@ -350,10 +350,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                      ...AccessibilityPreference.values.map((preference) {
+                      ),                      ...AccessibilityPreference.values.map((preference) {
                         return CheckboxListTile(
-                          title: Text(preference.toString().split('.').last),
+                          title: Text(preference.displayName),
                           value: _selectedPreferences.contains(preference),
                           onChanged: _isEditing
                               ? (bool? value) {

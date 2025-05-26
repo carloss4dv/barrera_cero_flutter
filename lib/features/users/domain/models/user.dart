@@ -110,6 +110,32 @@ enum AccessibilityPreference {
   textToSpeech
 }
 
+// Extensión para traducir las preferencias de accesibilidad al español
+extension AccessibilityPreferenceExtension on AccessibilityPreference {
+  String get displayName {
+    switch (this) {
+      case AccessibilityPreference.ramps:
+        return 'Rampas';
+      case AccessibilityPreference.elevators:
+        return 'Ascensores';
+      case AccessibilityPreference.adaptedBathrooms:
+        return 'Baños adaptados';
+      case AccessibilityPreference.wideCorridors:
+        return 'Pasillos amplios';
+      case AccessibilityPreference.lowInclination:
+        return 'Baja inclinación';
+      case AccessibilityPreference.audioSignals:
+        return 'Señales de audio';
+      case AccessibilityPreference.visualSignals:
+        return 'Señales visuales';
+      case AccessibilityPreference.highContrast:
+        return 'Alto contraste';
+      case AccessibilityPreference.textToSpeech:
+        return 'Texto a voz';
+    }
+  }
+}
+
 class Badge {
   final String id;
   final String name;
