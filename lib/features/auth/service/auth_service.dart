@@ -2,9 +2,13 @@ import "package:firebase_auth/firebase_auth.dart";
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Fixed import
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../users/services/user_service.dart';
+import '../../../services/local_user_storage_service.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final UserService _userService = UserService();
   SharedPreferences? _prefs;
   static const String _userKey = 'current_user';
   bool _isInitialized = false;
@@ -54,6 +58,7 @@ class AuthService extends ChangeNotifier {
       if (_prefs != null) {
         await _prefs!.remove(_userKey);
       }
+      await localUserStorage.clearUserData();
       notifyListeners();
     } catch (e) {
       print('Error during sign out: $e');
@@ -69,18 +74,97 @@ class AuthService extends ChangeNotifier {
 
   String? get currentUserId => currentUser?.uid;
 
+  // Métodos para obtener información del usuario desde SharedPreferences
+  Future<Map<String, dynamic>?> getUserFromPrefs() async {
+    if (_prefs == null) return null;
+    final savedUserJson = _prefs!.getString(_userKey);
+    if (savedUserJson != null) {
+      try {
+        return json.decode(savedUserJson) as Map<String, dynamic>;
+      } catch (e) {
+        print('Error decodificando datos del usuario: $e');
+        return null;
+      }
+    }
+    return null;
+  }
+
+  Future<String?> getUserNameFromPrefs() async {
+    final userData = await getUserFromPrefs();
+    return userData?['name'] as String?;
+  }
+
+  Future<String?> getUserEmailFromPrefs() async {
+    final userData = await getUserFromPrefs();
+    return userData?['email'] as String?;
+  }
+
+  Future<String?> getUserDisplayNameFromPrefs() async {
+    final userData = await getUserFromPrefs();
+    return userData?['displayName'] as String?;
+  }
+
   Future<void> _saveUserToPrefs(User? user) async {
     if (_prefs == null) return;
     
     if (user == null) {
       await _prefs!.remove(_userKey);
+      await localUserStorage.clearUserData();
     } else {
-      final userData = {
-        'uid': user.uid,
-        'email': user.email,
-        'displayName': user.displayName,
-      };
-      await _prefs!.setString(_userKey, json.encode(userData));
+      try {
+        // Obtener información adicional del usuario desde Firestore
+        final firestoreUser = await _userService.getUserById(user.uid);
+        
+        final userData = {
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName,
+          'name': firestoreUser?.name ?? user.displayName ?? user.email?.split('@').first ?? 'Usuario',
+        };
+        await _prefs!.setString(_userKey, json.encode(userData));
+        
+        // Guardar información completa en el nuevo servicio de almacenamiento local
+        if (firestoreUser != null) {
+          await localUserStorage.saveUserData(
+            uid: user.uid,
+            email: user.email ?? '',
+            name: firestoreUser.name,
+            displayName: user.displayName,
+            mobilityType: firestoreUser.mobilityType.toString().split('.').last,
+            accessibilityPreferences: firestoreUser.accessibilityPreferences
+                .map((pref) => pref.toString().split('.').last)
+                .toList(),
+            contributionPoints: firestoreUser.contributionPoints,
+          );
+        } else {
+          // Si no hay datos en Firestore, guardar datos básicos
+          await localUserStorage.saveUserData(
+            uid: user.uid,
+            email: user.email ?? '',
+            name: user.displayName ?? user.email?.split('@').first ?? 'Usuario',
+            displayName: user.displayName,
+          );
+        }
+        
+      } catch (e) {
+        // Si hay error al obtener datos de Firestore, guardar solo los datos básicos
+        print('Error obteniendo datos de Firestore: $e');
+        final userData = {
+          'uid': user.uid,
+          'email': user.email,
+          'displayName': user.displayName,
+          'name': user.displayName ?? user.email?.split('@').first ?? 'Usuario',
+        };
+        await _prefs!.setString(_userKey, json.encode(userData));
+        
+        // Guardar datos básicos en el nuevo servicio
+        await localUserStorage.saveUserData(
+          uid: user.uid,
+          email: user.email ?? '',
+          name: user.displayName ?? user.email?.split('@').first ?? 'Usuario',
+          displayName: user.displayName,
+        );
+      }
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/models/user.dart';
+import '../../../services/local_user_storage_service.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -7,11 +8,13 @@ class UserService {
   
   // Constantes para el sistema de puntos
   static const int VALIDATION_VOTE_POINTS = 20;
-
   // Crear nuevo usuario
   Future<void> createUser(User user) async {
     print('Creando usuario: ${user.toMap()}');
     await _firestore.collection(_collection).doc(user.id).set(user.toMap());
+    
+    // Sincronizar con almacenamiento local
+    await localUserStorage.syncWithFirestore(user.toMap());
   }
 
   // Obtener usuario por ID
@@ -30,10 +33,12 @@ class UserService {
         .map((doc) => User.fromMap(doc.data()))
         .toList();
   }
-
   // Actualizar usuario
   Future<void> updateUser(User user) async {
     await _firestore.collection(_collection).doc(user.id).update(user.toMap());
+    
+    // Sincronizar con almacenamiento local
+    await localUserStorage.syncWithFirestore(user.toMap());
   }
 
   // Eliminar usuario
@@ -52,7 +57,6 @@ class UserService {
         .map((doc) => User.fromMap(doc.data()))
         .toList();
   }
-
   // Añadir B-points a un usuario por validación de accesibilidad
   Future<void> awardValidationPoints(String userId) async {
     try {
@@ -73,6 +77,9 @@ class UserService {
           'updatedAt': DateTime.now(),
         });
       });
+      
+      // Actualizar puntos en almacenamiento local
+      await localUserStorage.addContributionPoints(VALIDATION_VOTE_POINTS);
       
       print('Se otorgaron $VALIDATION_VOTE_POINTS B-points al usuario $userId');
     } catch (e) {

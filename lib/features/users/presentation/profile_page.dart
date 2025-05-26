@@ -368,8 +368,55 @@ class _ProfilePageState extends State<ProfilePage> {
                       }),
                     ],
                   ),
+                ),              ),
+              const SizedBox(height: 16),
+
+              // Sección de herramientas de desarrollo
+              Card(
+                elevation: 4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Herramientas de Desarrollo',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.storage,
+                            color: Colors.blue.shade700,
+                            size: 24,
+                          ),
+                        ),
+                        title: const Text(
+                          'Demo de Almacenamiento Local',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'Prueba las funcionalidades de almacenamiento local y gestión de datos de usuario'
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios),
+                        onTap: () {
+                          Navigator.pushNamed(context, '/local-storage-demo');
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -383,4 +430,4 @@ class _ProfilePageState extends State<ProfilePage> {
     _emailController.dispose();
     super.dispose();
   }
-} 
+}

@@ -3,6 +3,7 @@ import 'dart:ui';
 import '../service/auth_service.dart';
 import '../../users/services/user_service.dart';
 import '../../users/domain/models/user.dart';
+import '../../../services/local_user_storage_service.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);

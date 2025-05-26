@@ -13,6 +13,7 @@ import 'features/map/infrastructure/providers/map_filters_provider.dart';
 import 'features/forum/presentation/screens/forum_screen.dart';
 import 'features/forum/di/forum_module.dart';
 import 'features/notifications/infrastructure/services/firebase_messaging_service.dart';
+import 'pages/local_storage_demo_page.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -96,8 +97,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             )),
-            initialRoute: '/',
-            routes: {
+            initialRoute: '/',            routes: {
               '/': (context) => AccessibilityWrapper(child: const MapPage()),
               '/login': (context) => const LoginPage(),
               '/register': (context) => const RegisterPage(),
@@ -109,6 +109,7 @@ class MyApp extends StatelessWidget {
                 return ProfilePage(userId: args);
               },
               '/forum': (context) => const ForumScreen(),
+              '/local-storage-demo': (context) => const LocalStorageDemoPage(),
             },
           );
         },
