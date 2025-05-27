@@ -301,24 +301,7 @@ class _MapViewState extends State<MapView> {
                             ),
                           );
                         }
-                      },                    ),
-                      const SizedBox(height: 8),
-                    
-                    // Botón de demo del almacenamiento local
-                    FloatingActionButton(
-                      heroTag: 'local_storage_demo',
-                      mini: true,
-                      backgroundColor: isHighContrastMode 
-                          ? AccessibilityProvider.kAccentColor 
-                          : Colors.white,
-                      child: Icon(
-                        Icons.storage,
-                        color: isHighContrastMode ? Colors.black : Colors.black87,
-                      ),
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/local-storage-demo');
-                      },
-                    ),
+                      },                      ),
                       const SizedBox(height: 8),
                     
                     // Botón temporal para subir datos mock (oculto pero código preservado)

@@ -377,8 +377,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                    crossAxisAlignment: CrossAxisAlignment.start,                      children: [
                       const Text(
                         'Herramientas de Desarrollo',
                         style: TextStyle(
@@ -387,30 +386,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      ListTile(
-                        leading: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade100,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.storage,
-                            color: Colors.blue.shade700,
-                            size: 24,
-                          ),
+                      const Text(
+                        'Las herramientas de desarrollo han sido deshabilitadas.',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
                         ),
-                        title: const Text(
-                          'Demo de Almacenamiento Local',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: const Text(
-                          'Prueba las funcionalidades de almacenamiento local y gestión de datos de usuario'
-                        ),
-                        trailing: const Icon(Icons.arrow_forward_ios),
-                        onTap: () {
-                          Navigator.pushNamed(context, '/local-storage-demo');
-                        },
                       ),
                     ],
                   ),

@@ -13,12 +13,10 @@ import 'features/map/infrastructure/providers/map_filters_provider.dart';
 import 'features/forum/presentation/screens/forum_screen.dart';
 import 'features/forum/di/forum_module.dart';
 import 'features/notifications/infrastructure/services/firebase_messaging_service.dart';
-import 'pages/local_storage_demo_page.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'features/auth/service/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Constantes para URLs de mapas en diferentes estilos
 const String kDefaultMapUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -109,7 +107,6 @@ class MyApp extends StatelessWidget {
                 return ProfilePage(userId: args);
               },
               '/forum': (context) => const ForumScreen(),
-              '/local-storage-demo': (context) => const LocalStorageDemoPage(),
             },
           );
         },
