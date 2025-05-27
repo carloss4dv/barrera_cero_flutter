@@ -99,9 +99,9 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                         isSelected: _selectedLevel == 0,
                         onTap: () => _updateSelectedLevel(0),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 8),                      
                       _buildAccessibilityLevelChip(
-                        label: 'Alta (4.0-5.0)',
+                        label: 'Alta',
                         value: 1,
                         color: Colors.green.shade600,
                         isSelected: _selectedLevel == 1,
@@ -109,7 +109,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                       ),
                       const SizedBox(width: 8),
                       _buildAccessibilityLevelChip(
-                        label: 'Media (2.0-3.99)',
+                        label: 'Media',
                         value: 2,
                         color: Colors.amber.shade600,
                         isSelected: _selectedLevel == 2,
@@ -117,7 +117,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                       ),
                       const SizedBox(width: 8),
                       _buildAccessibilityLevelChip(
-                        label: 'Baja (1.0-1.99)',
+                        label: 'Baja',
                         value: 3,
                         color: Colors.red.shade600,
                         isSelected: _selectedLevel == 3,
