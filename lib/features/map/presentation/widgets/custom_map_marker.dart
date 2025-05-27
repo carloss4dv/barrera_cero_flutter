@@ -19,77 +19,83 @@ class CustomMapMarker extends StatelessWidget {
     required this.marker,
     this.isSelected = false,
     required this.onTap,
-  }) : super(key: key);
-  @override
+  }) : super(key: key);  @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final mapFiltersProvider = Provider.of<MapFiltersProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     
-    // Verificar si el marcador debe mostrarse según los filtros
     // Crear un mapa que incluya tanto los metadatos como el tipo del marcador
     final markerData = {
       ...marker.metadata.toJson(),
       'type': marker.type.toString().split('.').last, // Convertir enum a string
     };
     
-    if (!mapFiltersProvider.shouldShowMarker(markerData)) {
-      return const SizedBox.shrink();
-    }
+    return FutureBuilder<bool>(
+      future: mapFiltersProvider.shouldShowMarkerAsync(markerData, marker.id),
+      builder: (context, shouldShowSnapshot) {
+        // Si aún no tenemos el resultado del filtro, mostrar temporalmente el marcador
+        // para evitar parpadeos. El resultado por defecto es true para una mejor experiencia
+        final shouldShow = shouldShowSnapshot.data ?? true;
+        
+        if (!shouldShow) {
+          return const SizedBox.shrink();
+        }
 
-    return FutureBuilder<Color>(
-      future: _getMarkerColorAsync(),
-      builder: (context, snapshot) {
-        // Color de fondo: usar el color del snapshot si está disponible,
-        // o el color del marcador como fallback (nunca usar gris como valor por defecto)
-        final Color backgroundColor = isHighContrastMode 
-            ? accessibilityProvider.getEnhancedColor(snapshot.data ?? marker.color)
-            : snapshot.data ?? marker.color;
+        return FutureBuilder<Color>(
+          future: _getMarkerColorAsync(),
+          builder: (context, colorSnapshot) {            // Color de fondo: usar el color del snapshot si está disponible,
+            // o el color del marcador como fallback (nunca usar gris como valor por defecto)
+            final Color backgroundColor = isHighContrastMode 
+                ? accessibilityProvider.getEnhancedColor(colorSnapshot.data ?? marker.color)
+                : colorSnapshot.data ?? marker.color;
+                
+            // Color del icono: calcular basado en la luminosidad del fondo para mejor contraste
+            final Color iconColor = isHighContrastMode
+                ? (backgroundColor.computeLuminance() > 0.5 ? Colors.black : Colors.white)
+                : Colors.white;
             
-        // Color del icono: calcular basado en la luminosidad del fondo para mejor contraste
-        final Color iconColor = isHighContrastMode
-            ? (backgroundColor.computeLuminance() > 0.5 ? Colors.black : Colors.white)
-            : Colors.white;
+            // Color del borde: usar blanco en modo alto contraste, o el borderColor del marcador
+            final Color borderColor = isHighContrastMode 
+                ? Colors.white
+                : marker.borderColor;
             
-        // Color del borde: usar blanco en modo alto contraste, o el borderColor del marcador
-        final Color borderColor = isHighContrastMode 
-            ? Colors.white
-            : marker.borderColor;
-        
-        // Widget del marcador según modo de accesibilidad
-        final Widget markerWidget = isHighContrastMode
-            ? SizedBox(
-                width: isSelected ? marker.width * 1.5 : marker.width * 1.3,
-                height: isSelected ? marker.height * 2.0 : marker.height * 1.8,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _buildMarkerDot(backgroundColor, borderColor, iconColor),
-                    const SizedBox(height: 2),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
-                      margin: const EdgeInsets.only(top: 1),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                      child: Text(
-                        _getMarkerTypeText(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
+            // Widget del marcador según modo de accesibilidad
+            final Widget markerWidget = isHighContrastMode
+                ? SizedBox(
+                    width: isSelected ? marker.width * 1.5 : marker.width * 1.3,
+                    height: isSelected ? marker.height * 2.0 : marker.height * 1.8,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildMarkerDot(backgroundColor, borderColor, iconColor),
+                        const SizedBox(height: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                          margin: const EdgeInsets.only(top: 1),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                          child: Text(
+                            _getMarkerTypeText(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              )
-            : _buildMarkerDot(backgroundColor, borderColor, iconColor);
-        
-        return GestureDetector(
-          onTap: onTap,
-          child: markerWidget,
+                  )
+                : _buildMarkerDot(backgroundColor, borderColor, iconColor);
+            
+            return GestureDetector(
+              onTap: onTap,
+              child: markerWidget,
+            );
+          },
         );
       },
     );

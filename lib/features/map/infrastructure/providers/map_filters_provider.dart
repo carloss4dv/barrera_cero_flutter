@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
+import 'package:get_it/get_it.dart';
+import '../../../accessibility/domain/i_accessibility_report_service.dart';
+import '../../../accessibility/domain/accessibility_report_model.dart';
 
 class MapFiltersProvider extends ChangeNotifier {
+  late final IAccessibilityReportService _reportService;
   int _accessibilityLevel = 0;
   Map<String, bool> _metadataFilters = {
     'hasRamp': false,
@@ -10,6 +14,10 @@ class MapFiltersProvider extends ChangeNotifier {
     'hasAudioGuidance': false,
     'hasTactilePavement': false,
   };
+
+  MapFiltersProvider() {
+    _reportService = GetIt.instance<IAccessibilityReportService>();
+  }
 
   int get accessibilityLevel => _accessibilityLevel;
   Map<String, bool> get metadataFilters => Map.unmodifiable(_metadataFilters);
@@ -42,34 +50,7 @@ class MapFiltersProvider extends ChangeNotifier {
       return true;
     }
 
-    // Verificar nivel de accesibilidad
-    if (_accessibilityLevel > 0) {
-      final double score = (metadata['accessibilityScore'] ?? 0.0).toDouble();
-      print('Puntuación de accesibilidad: $score');
-      
-      switch (_accessibilityLevel) {
-        case 1: // Alta accesibilidad (4.0 - 5.0)
-          if (score < 4.0) {
-            print('No cumple con alta accesibilidad - Ocultando');
-            return false;
-          }
-          break;
-        case 2: // Media accesibilidad (2.0 - 3.99)
-          if (score < 2.0 || score >= 4.0) {
-            print('No cumple con media accesibilidad - Ocultando');
-            return false;
-          }
-          break;
-        case 3: // Baja accesibilidad (0 - 1.99)
-          if (score >= 2.0) {
-            print('No cumple con baja accesibilidad - Ocultando');
-            return false;
-          }
-          break;
-      }
-    }
-
-    // Verificar filtros de metadatos
+    // Verificar filtros de metadatos primero
     for (var entry in _metadataFilters.entries) {
       if (entry.value) { // Solo verificar los filtros que están activos
         final metadataValue = metadata[entry.key] as bool? ?? false;
@@ -81,7 +62,138 @@ class MapFiltersProvider extends ChangeNotifier {
       }
     }
 
-    print('Marcador cumple con todos los filtros - Mostrando');
-    return true;
+    // Si no hay filtro de accesibilidad activo, mostrar el marcador
+    if (_accessibilityLevel == 0) {
+      print('No hay filtro de accesibilidad activo - Mostrando');
+      return true;
+    }
+
+    // Para filtros de accesibilidad, usar el metadata score como fallback para compatibilidad
+    // Este será actualizado por el método asíncrono cuando sea posible
+    final double score = (metadata['accessibilityScore'] ?? 0.0).toDouble();
+    print('Puntuación de accesibilidad (metadata): $score');
+    
+    switch (_accessibilityLevel) {
+      case 1: // Alta accesibilidad (4.0 - 5.0)
+        if (score >= 4.0) {
+          print('Cumple con alta accesibilidad - Mostrando');
+          return true;
+        } else {
+          print('No cumple con alta accesibilidad - Ocultando');
+          return false;
+        }
+      case 2: // Media accesibilidad (2.0 - 3.99)
+        if (score >= 2.0 && score < 4.0) {
+          print('Cumple con media accesibilidad - Mostrando');
+          return true;
+        } else {
+          print('No cumple con media accesibilidad - Ocultando');
+          return false;
+        }
+      case 3: // Baja accesibilidad (1.0 - 1.99)
+        if (score >= 1.0 && score < 2.0) {
+          print('Cumple con baja accesibilidad - Mostrando');
+          return true;
+        } else {
+          print('No cumple con baja accesibilidad - Ocultando');
+          return false;
+        }
+      default:
+        return true;
+    }
+  }
+
+  /// Verifica de forma asíncrona si un marcador debe mostrarse basado en los reportes
+  Future<bool> shouldShowMarkerAsync(Map<String, dynamic> metadata, String markerId) async {
+    // Verificaciones síncronas primero
+    if (metadata['type'] == 'currentLocation') {
+      return true;
+    }
+
+    if (_accessibilityLevel == 0 && !_metadataFilters.values.any((value) => value)) {
+      return true;
+    }
+
+    // Verificar filtros de metadatos
+    for (var entry in _metadataFilters.entries) {
+      if (entry.value) {
+        final metadataValue = metadata[entry.key] as bool? ?? false;
+        if (!metadataValue) {
+          return false;
+        }
+      }
+    }
+
+    // Si no hay filtro de accesibilidad activo, mostrar el marcador
+    if (_accessibilityLevel == 0) {
+      return true;
+    }
+
+    // Verificar nivel de accesibilidad basado en reportes
+    try {
+      final reportsResult = await _reportService.getReportsForMarker(markerId);
+      if (reportsResult.isSuccess()) {
+        final reports = reportsResult.getOrThrow();
+        
+        if (reports.isEmpty) {
+          // Si no hay reportes, mostrar en "Todos" (nivel 0) pero no en otros filtros específicos
+          return _accessibilityLevel == 0;
+        }
+
+        // Calcular puntuación promedio igual que en custom_map_marker.dart
+        double totalScore = 0;
+        for (final report in reports) {
+          switch (report.level) {
+            case AccessibilityLevel.good:
+              totalScore += 5; // Reporte positivo vale 5
+              break;
+            case AccessibilityLevel.medium:
+              totalScore += 4; // Reporte neutro vale 4
+              break;
+            case AccessibilityLevel.bad:
+              totalScore += 2; // Reporte negativo vale 2
+              break;
+          }
+        }
+        
+        final averageScore = totalScore / reports.length;
+        print('Puntuación calculada desde reportes: $averageScore');
+        
+        switch (_accessibilityLevel) {
+          case 1: // Alta accesibilidad (4.0 - 5.0)
+            if (averageScore >= 4.0) {
+              print('Cumple con alta accesibilidad - Mostrando');
+              return true;
+            } else {
+              print('No cumple con alta accesibilidad - Ocultando');
+              return false;
+            }
+          case 2: // Media accesibilidad (2.0 - 3.99)
+            if (averageScore >= 2.0 && averageScore < 4.0) {
+              print('Cumple con media accesibilidad - Mostrando');
+              return true;
+            } else {
+              print('No cumple con media accesibilidad - Ocultando');
+              return false;
+            }
+          case 3: // Baja accesibilidad (1.0 - 1.99)
+            if (averageScore >= 1.0 && averageScore < 2.0) {
+              print('Cumple con baja accesibilidad - Mostrando');
+              return true;
+            } else {
+              print('No cumple con baja accesibilidad - Ocultando');
+              return false;
+            }
+          default:
+            return true;
+        }
+      }
+    } catch (e) {
+      print('Error al verificar reportes: $e');
+      // En caso de error, mostrar el marcador solo si no hay filtro específico activo
+      return _accessibilityLevel == 0;
+    }
+
+    return false;
   }
 }

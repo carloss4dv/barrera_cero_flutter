@@ -92,8 +92,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: [
-                      _buildAccessibilityLevelChip(
+                    children: [                      _buildAccessibilityLevelChip(
                         label: 'Todos',
                         value: 0,
                         color: Colors.grey.shade700,
