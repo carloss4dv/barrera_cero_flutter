@@ -765,16 +765,16 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     // Calcular la media de las puntuaciones
     double totalScore = 0;
     for (final report in _reports!) {
-      switch (report.level) {
+      switch (report.level) {        
         case AccessibilityLevel.good:
           totalScore += 5; // Reporte positivo vale 5
           break;
         case AccessibilityLevel.medium:
-          totalScore += 4; // Reporte neutro vale 4
+          totalScore += 3; // Reporte neutro vale 3
           break;
         case AccessibilityLevel.bad:
-          totalScore += 2; // Reporte negativo vale 2
-          break;
+          totalScore += 1; // Reporte negativo vale 1
+          break;  
       }
     }
     
