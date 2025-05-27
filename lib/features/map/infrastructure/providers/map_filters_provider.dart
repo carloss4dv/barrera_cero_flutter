@@ -44,23 +44,24 @@ class MapFiltersProvider extends ChangeNotifier {
 
     // Verificar nivel de accesibilidad
     if (_accessibilityLevel > 0) {
-      final score = metadata['accessibilityScore'] as int? ?? 0;
+      final double score = (metadata['accessibilityScore'] ?? 0.0).toDouble();
       print('Puntuación de accesibilidad: $score');
+      
       switch (_accessibilityLevel) {
-        case 1: // Alta accesibilidad
-          if (score < 4) {
+        case 1: // Alta accesibilidad (4.0 - 5.0)
+          if (score < 4.0) {
             print('No cumple con alta accesibilidad - Ocultando');
             return false;
           }
           break;
-        case 2: // Media accesibilidad
-          if (score < 2 || score > 3) {
+        case 2: // Media accesibilidad (2.0 - 3.99)
+          if (score < 2.0 || score >= 4.0) {
             print('No cumple con media accesibilidad - Ocultando');
             return false;
           }
           break;
-        case 3: // Baja accesibilidad
-          if (score > 1) {
+        case 3: // Baja accesibilidad (0 - 1.99)
+          if (score >= 2.0) {
             print('No cumple con baja accesibilidad - Ocultando');
             return false;
           }
@@ -83,4 +84,4 @@ class MapFiltersProvider extends ChangeNotifier {
     print('Marcador cumple con todos los filtros - Mostrando');
     return true;
   }
-} 
+}

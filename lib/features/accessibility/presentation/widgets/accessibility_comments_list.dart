@@ -118,11 +118,11 @@ class CommentItem extends StatelessWidget {
   Color _getLevelColor(AccessibilityLevel level) {
     switch (level) {
       case AccessibilityLevel.good:
-        return Colors.green;
+        return Colors.green; // Verde para reportes positivos (5 puntos)
       case AccessibilityLevel.medium:
-        return Colors.amber;
+        return Colors.amber; // Amarillo para reportes neutros (4 puntos)
       case AccessibilityLevel.bad:
-        return Colors.red;
+        return Colors.red; // Rojo para reportes negativos (2 puntos)
     }
   }
 
@@ -140,11 +140,11 @@ class CommentItem extends StatelessWidget {
   String _getLevelText(AccessibilityLevel level) {
     switch (level) {
       case AccessibilityLevel.good:
-        return 'Buen acceso';
+        return 'Muy accesible (5 puntos)';
       case AccessibilityLevel.medium:
-        return 'Acceso medio';
+        return 'Accesible (4 puntos)';
       case AccessibilityLevel.bad:
-        return 'Mal acceso';
+        return 'Poco accesible (2 puntos)';
     }
   }
-} 
+}

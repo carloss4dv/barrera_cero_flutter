@@ -102,7 +102,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                       ),
                       const SizedBox(width: 8),
                       _buildAccessibilityLevelChip(
-                        label: 'Alta',
+                        label: 'Alta (4.0-5.0)',
                         value: 1,
                         color: Colors.green.shade600,
                         isSelected: _selectedLevel == 1,
@@ -110,15 +110,15 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                       ),
                       const SizedBox(width: 8),
                       _buildAccessibilityLevelChip(
-                        label: 'Media',
+                        label: 'Media (2.0-3.99)',
                         value: 2,
-                        color: Colors.orange.shade600,
+                        color: Colors.amber.shade600,
                         isSelected: _selectedLevel == 2,
                         onTap: () => _updateSelectedLevel(2),
                       ),
                       const SizedBox(width: 8),
                       _buildAccessibilityLevelChip(
-                        label: 'Baja',
+                        label: 'Baja (1.0-1.99)',
                         value: 3,
                         color: Colors.red.shade600,
                         isSelected: _selectedLevel == 3,
@@ -302,7 +302,7 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected ? color : Colors.grey.withOpacity(0.3),
-                  width: 1.5,
+                  width: 1,
                 ),
               ),
             ),
@@ -311,8 +311,8 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
               label,
               style: TextStyle(
                 color: isSelected ? color : Colors.grey.shade700,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
               ),
             ),
           ],
@@ -486,4 +486,4 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
       ),
     );
   }
-} 
+}

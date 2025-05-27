@@ -761,28 +761,33 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     if (_reports == null || _reports!.isEmpty) {
       return AccessibilityLevel.medium;
     }
-    
-    final countByLevel = <AccessibilityLevel, int>{
-      AccessibilityLevel.good: 0,
-      AccessibilityLevel.medium: 0,
-      AccessibilityLevel.bad: 0,
-    };
-    
+
+    // Calcular la media de las puntuaciones
+    double totalScore = 0;
     for (final report in _reports!) {
-      countByLevel[report.level] = (countByLevel[report.level] ?? 0) + 1;
+      switch (report.level) {
+        case AccessibilityLevel.good:
+          totalScore += 5; // Reporte positivo vale 5
+          break;
+        case AccessibilityLevel.medium:
+          totalScore += 4; // Reporte neutro vale 4
+          break;
+        case AccessibilityLevel.bad:
+          totalScore += 2; // Reporte negativo vale 2
+          break;
+      }
     }
     
-    AccessibilityLevel predominantLevel = AccessibilityLevel.medium;
-    int maxCount = 0;
-    
-    countByLevel.forEach((level, count) {
-      if (count > maxCount) {
-        maxCount = count;
-        predominantLevel = level;
-      }
-    });
-    
-    return predominantLevel;
+    final averageScore = totalScore / _reports!.length;
+
+    // Determinar el nivel predominante según la media
+    if (averageScore >= 4.0) {
+      return AccessibilityLevel.good; // 4.0 - 5.0: bueno
+    } else if (averageScore >= 2.0) {
+      return AccessibilityLevel.medium; // 2.0 - 3.99: medio
+    } else {
+      return AccessibilityLevel.bad; // < 2.0: malo
+    }
   }
 
   Widget _buildVoteButton({
@@ -1064,4 +1069,4 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       }
     }
   }
-} 
+}
