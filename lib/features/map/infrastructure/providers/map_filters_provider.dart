@@ -148,10 +148,10 @@ class MapFiltersProvider extends ChangeNotifier {
               totalScore += 5; // Reporte positivo vale 5
               break;
             case AccessibilityLevel.medium:
-              totalScore += 4; // Reporte neutro vale 4
+              totalScore += 3; // Reporte neutro vale 3
               break;
             case AccessibilityLevel.bad:
-              totalScore += 2; // Reporte negativo vale 2
+              totalScore += 1; // Reporte negativo vale 1
               break;
           }
         }
