@@ -12,10 +12,26 @@ class LocalUserStorageService {
   LocalUserStorageService._internal();
 
   SharedPreferences? _prefs;
-
   /// Inicializar SharedPreferences
   Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
+    try {
+      if (_prefs == null) {
+        print('🔄 Inicializando SharedPreferences...');
+        _prefs = await SharedPreferences.getInstance();
+        print('✅ SharedPreferences inicializado correctamente');
+      }
+    } catch (e) {
+      print('❌ Error inicializando SharedPreferences: $e');
+      // En caso de error, intentar una vez más después de un pequeño delay
+      await Future.delayed(const Duration(milliseconds: 500));
+      try {
+        _prefs = await SharedPreferences.getInstance();
+        print('✅ SharedPreferences inicializado en segundo intento');
+      } catch (retryError) {
+        print('❌ Error crítico en SharedPreferences después del reintento: $retryError');
+        rethrow;
+      }
+    }
   }
 
   /// Guardar información completa del usuario localmente
@@ -52,21 +68,36 @@ class LocalUserStorageService {
       return false;
     }
   }
-
   /// Obtener toda la información del usuario guardada localmente
   Future<Map<String, dynamic>?> getUserData() async {
     await init();
     
+    if (_prefs == null) {
+      print('❌ SharedPreferences no disponible');
+      return null;
+    }
+    
     try {
       final userDataJson = _prefs!.getString(_userDataKey);
       if (userDataJson != null) {
-        return json.decode(userDataJson) as Map<String, dynamic>;
+        final userData = json.decode(userDataJson) as Map<String, dynamic>;
+        print('✅ Datos de usuario recuperados: ${userData['email']}');
+        return userData;
+      } else {
+        print('⚠️ No hay datos de usuario guardados');
+        return null;
       }
     } catch (e) {
       print('❌ Error obteniendo datos del usuario: $e');
+      // En caso de datos corruptos, intentar limpiar
+      try {
+        await _prefs!.remove(_userDataKey);
+        print('🗑️ Datos corruptos eliminados');
+      } catch (cleanError) {
+        print('❌ Error limpiando datos corruptos: $cleanError');
+      }
+      return null;
     }
-    
-    return null;
   }
 
   /// Obtener solo el nombre del usuario

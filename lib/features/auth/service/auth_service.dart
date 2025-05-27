@@ -22,16 +22,26 @@ class AuthService extends ChangeNotifier {
 
   Future<void> _initialize() async {
     try {
+      print('🔄 Inicializando AuthService...');
       _prefs = await SharedPreferences.getInstance();
       _isInitialized = true;
+      print('✅ SharedPreferences inicializado correctamente');
+      
+      // Inicializar también el LocalUserStorage
+      final localStorage = LocalUserStorageService();
+      await localStorage.init();
+      print('✅ LocalUserStorage inicializado correctamente');
+      
       _auth.authStateChanges().listen((User? user) {
         if (_isInitialized && _prefs != null) {
+          print('🔄 Estado de autenticación cambió: ${user?.email ?? "sin usuario"}');
           _saveUserToPrefs(user);
           notifyListeners();
         }
       });
+      print('✅ Listener de estado de autenticación configurado');
     } catch (e) {
-      print('Error initializing SharedPreferences: $e');
+      print('❌ Error inicializando AuthService: $e');
       _isInitialized = false;
     }
   }
@@ -102,16 +112,28 @@ class AuthService extends ChangeNotifier {
   Future<String?> getUserDisplayNameFromPrefs() async {
     final userData = await getUserFromPrefs();
     return userData?['displayName'] as String?;
-  }
-
-  Future<void> _saveUserToPrefs(User? user) async {
-    if (_prefs == null) return;
+  }  Future<void> _saveUserToPrefs(User? user) async {
+    if (_prefs == null) {
+      print('⚠️ SharedPreferences no inicializado, intentando inicializar...');
+      await _initialize();
+      if (_prefs == null) {
+        print('❌ No se pudo inicializar SharedPreferences');
+        return;
+      }
+    }
     
     if (user == null) {
-      await _prefs!.remove(_userKey);
-      await localUserStorage.clearUserData();
+      try {
+        await _prefs!.remove(_userKey);
+        await localUserStorage.clearUserData();
+        print('🗑️ Datos de usuario eliminados');
+      } catch (e) {
+        print('❌ Error eliminando datos de usuario: $e');
+      }
     } else {
       try {
+        print('💾 Guardando datos de usuario: ${user.email}');
+        
         // Obtener información adicional del usuario desde Firestore
         final firestoreUser = await _userService.getUserById(user.uid);
         
@@ -121,7 +143,10 @@ class AuthService extends ChangeNotifier {
           'displayName': user.displayName,
           'name': firestoreUser?.name ?? user.displayName ?? user.email?.split('@').first ?? 'Usuario',
         };
+        
+        // Guardar en SharedPreferences legacy
         await _prefs!.setString(_userKey, json.encode(userData));
+        print('✅ Datos guardados en SharedPreferences');
         
         // Guardar información completa en el nuevo servicio de almacenamiento local
         if (firestoreUser != null) {
@@ -136,6 +161,7 @@ class AuthService extends ChangeNotifier {
                 .toList(),
             contributionPoints: firestoreUser.contributionPoints,
           );
+          print('✅ Datos completos guardados en LocalUserStorage');
         } else {
           // Si no hay datos en Firestore, guardar datos básicos
           await localUserStorage.saveUserData(
@@ -144,26 +170,32 @@ class AuthService extends ChangeNotifier {
             name: user.displayName ?? user.email?.split('@').first ?? 'Usuario',
             displayName: user.displayName,
           );
+          print('✅ Datos básicos guardados en LocalUserStorage');
         }
         
       } catch (e) {
+        print('❌ Error obteniendo/guardando datos de Firestore: $e');
         // Si hay error al obtener datos de Firestore, guardar solo los datos básicos
-        print('Error obteniendo datos de Firestore: $e');
-        final userData = {
-          'uid': user.uid,
-          'email': user.email,
-          'displayName': user.displayName,
-          'name': user.displayName ?? user.email?.split('@').first ?? 'Usuario',
-        };
-        await _prefs!.setString(_userKey, json.encode(userData));
-        
-        // Guardar datos básicos en el nuevo servicio
-        await localUserStorage.saveUserData(
-          uid: user.uid,
-          email: user.email ?? '',
-          name: user.displayName ?? user.email?.split('@').first ?? 'Usuario',
-          displayName: user.displayName,
-        );
+        try {
+          final userData = {
+            'uid': user.uid,
+            'email': user.email,
+            'displayName': user.displayName,
+            'name': user.displayName ?? user.email?.split('@').first ?? 'Usuario',
+          };
+          await _prefs!.setString(_userKey, json.encode(userData));
+          
+          // Guardar datos básicos en el nuevo servicio
+          await localUserStorage.saveUserData(
+            uid: user.uid,
+            email: user.email ?? '',
+            name: user.displayName ?? user.email?.split('@').first ?? 'Usuario',
+            displayName: user.displayName,
+          );
+          print('✅ Datos básicos guardados después del error');
+        } catch (saveError) {
+          print('❌ Error crítico guardando datos básicos: $saveError');
+        }
       }
     }
   }
@@ -173,17 +205,30 @@ class AuthService extends ChangeNotifier {
      String password,
   ) async {
     try {
-      // Configura la persistencia antes de iniciar sesión
-      await _auth.setPersistence(Persistence.LOCAL);
+      // En Android, la persistencia se maneja automáticamente
+      // Solo configurar persistencia en web
+      if (kIsWeb) {
+        await _auth.setPersistence(Persistence.LOCAL);
+      }
       
       final credential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      
+      // Asegurarse de que _prefs esté inicializado antes de guardar
+      if (!_isInitialized || _prefs == null) {
+        await _initialize();
+      }
+      
       await _saveUserToPrefs(credential.user);
       notifyListeners();
       return credential;
     } catch (e) {
+      print('❌ Error en signIn: $e');
+      if (e is FirebaseAuthException) {
+        print('🔥 Firebase Auth Error - Code: ${e.code}, Message: ${e.message}');
+      }
       rethrow;
     }
   }
