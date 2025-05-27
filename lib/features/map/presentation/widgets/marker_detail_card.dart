@@ -69,17 +69,22 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       _isLoading = false;
     });
   }
-  
-  Future<void> _loadReports() async {
+    Future<void> _loadReports() async {
+    print('Cargando reportes para marcador: ${widget.marker.id}');
     final result = await _reportService.getReportsForMarker(widget.marker.id);
     
     result.fold(
       (reports) {
+        print('Reportes cargados: ${reports.length}');
+        for (var report in reports) {
+          print('Reporte ${report.id}: ${report.comments} (${report.level})');
+        }
         setState(() {
           _reports = reports;
         });
       },
       (error) {
+        print('Error cargando reportes: ${error.message}');
         setState(() {
           _errorMessage = error.message;
         });
@@ -329,45 +334,107 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Escriba su reporte',
+                      children: [                        Text(
+                          'Reporte de accesibilidad',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Comparte tu experiencia sobre la accesibilidad de este lugar',
+                          style: TextStyle(
+                            fontSize: 13,
                             color: textColor.withOpacity(0.7),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        
-                        // Verificar si el usuario está autenticado
+                          // Verificar si el usuario está autenticado
                         Builder(builder: (context) {
                           final authService = GetIt.instance<AuthService>();
                           final bool isAuthenticated = authService.currentUser != null;
                           
                           if (isAuthenticated) {
-                            // Mostrar botones de reporte si está autenticado
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _buildFeedbackButton(
-                                  color: isHighContrastMode ? theme.colorScheme.secondary : Colors.green,
-                                  icon: Icons.sentiment_very_satisfied,
-                                  level: AccessibilityLevel.good,
-                                  highContrastMode: isHighContrastMode,
-                                ),
-                                _buildFeedbackButton(
-                                  color: isHighContrastMode ? theme.colorScheme.secondary : Colors.amber,
-                                  icon: Icons.sentiment_neutral,
-                                  level: AccessibilityLevel.medium,
-                                  highContrastMode: isHighContrastMode,
-                                ),
-                                _buildFeedbackButton(
-                                  color: isHighContrastMode ? theme.colorScheme.error : Colors.red,
-                                  icon: Icons.sentiment_very_dissatisfied,
-                                  level: AccessibilityLevel.bad,
-                                  highContrastMode: isHighContrastMode,
-                                ),
-                              ],
+                            // Mostrar botones de reporte si está autenticado con información del reporte existente
+                            return FutureBuilder<AccessibilityReportModel?>(
+                              future: _getUserExistingReport(),
+                              builder: (context, snapshot) {
+                                final existingReport = snapshot.data;
+                                
+                                return Column(
+                                  children: [
+                                    // Mostrar indicador si ya existe un reporte
+                                    if (existingReport != null)
+                                      Container(
+                                        margin: const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '✓ Ya tienes un reporte aquí',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: Colors.blue[700],
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    'Nivel: ${_getLevelText(existingReport.level)} • Toca para editar',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.blue[600],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    
+                                    // Botones de feedback
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        _buildFeedbackButton(
+                                          color: isHighContrastMode ? theme.colorScheme.secondary : Colors.green,
+                                          icon: Icons.sentiment_very_satisfied,
+                                          level: AccessibilityLevel.good,
+                                          highContrastMode: isHighContrastMode,
+                                          existingReport: existingReport,
+                                        ),
+                                        _buildFeedbackButton(
+                                          color: isHighContrastMode ? theme.colorScheme.secondary : Colors.amber,
+                                          icon: Icons.sentiment_neutral,
+                                          level: AccessibilityLevel.medium,
+                                          highContrastMode: isHighContrastMode,
+                                          existingReport: existingReport,
+                                        ),
+                                        _buildFeedbackButton(
+                                          color: isHighContrastMode ? theme.colorScheme.error : Colors.red,
+                                          icon: Icons.sentiment_very_dissatisfied,
+                                          level: AccessibilityLevel.bad,
+                                          highContrastMode: isHighContrastMode,
+                                          existingReport: existingReport,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
                             );
                           } else {
                             // Mostrar mensaje de inicio de sesión si no está autenticado
@@ -526,20 +593,42 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
           );
         },
       ),
-    );
-  }  // Método eliminado ya que no se estaba utilizando
+    );  }  // Método eliminado ya que no se estaba utilizando
+
+  Future<AccessibilityReportModel?> _getUserExistingReport() async {
+    final authService = GetIt.instance<AuthService>();
+    final currentUser = authService.currentUser;
+    
+    if (currentUser == null) return null;
+    
+    try {
+      final result = await _reportService.getUserReportForMarker(widget.marker.id, currentUser.uid);
+      if (result.isSuccess()) {
+        final reports = result.getOrNull()!;
+        return reports.isNotEmpty ? reports.first : null;
+      }
+    } catch (e) {
+      print('Error obteniendo reporte del usuario: $e');
+    }
+    
+    return null;
+  }
 
   Widget _buildFeedbackButton({
     required Color color,
     required IconData icon,
     required AccessibilityLevel level,
-    bool highContrastMode = false,
+    bool highContrastMode = false,    AccessibilityReportModel? existingReport,
   }) {
     final iconColor = highContrastMode ? Colors.black : Colors.white;
+    final isSelectedLevel = existingReport?.level == level;
+    final hasExistingReport = existingReport != null;
     
     return Semantics(
       button: true,
-      label: 'Reportar como ${level.toString().split('.').last}',
+      label: hasExistingReport 
+          ? (isSelectedLevel ? 'Editar tu reporte de ${level.toString().split('.').last}' : 'Cambiar a ${level.toString().split('.').last}')
+          : 'Reportar como ${level.toString().split('.').last}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -549,24 +638,82 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-                CircleAvatar(
-                  backgroundColor: color,
-                  radius: 20,
-                  child: Icon(icon, color: iconColor),
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: isSelectedLevel && hasExistingReport 
+                          ? color 
+                          : hasExistingReport 
+                              ? color.withOpacity(0.3)
+                              : color,
+                      radius: 20,
+                      child: Icon(
+                        icon, 
+                        color: isSelectedLevel && hasExistingReport 
+                            ? iconColor 
+                            : hasExistingReport 
+                                ? iconColor.withOpacity(0.6)
+                                : iconColor,
+                      ),
+                    ),
+                    if (isSelectedLevel && hasExistingReport)
+                      Positioned(
+                        right: -2,
+                        top: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.blue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _getLevelText(level),
-                  style: TextStyle(fontSize: 12),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelectedLevel && hasExistingReport 
+                        ? FontWeight.bold 
+                        : FontWeight.normal,
+                    color: isSelectedLevel && hasExistingReport 
+                        ? Colors.blue 
+                        : hasExistingReport 
+                            ? Colors.grey 
+                            : null,
+                  ),
                 ),
+                if (isSelectedLevel && hasExistingReport)
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'TU REPORTE',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
         ),
       ),
     );
-  }
-  Future<void> _showReportDialog(AccessibilityLevel level) async {
+  }  Future<void> _showReportDialog(AccessibilityLevel level) async {
     final authService = GetIt.instance<AuthService>();
     
     // Verificar si el usuario está autenticado
@@ -607,48 +754,179 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       );
       return;
     }
+
+    final currentUser = authService.currentUser!;
     
-    // Si está autenticado, mostrar el diálogo normal
+    // Verificar si el usuario ya tiene un reporte para este marcador
+    final existingReportsResult = await _reportService.getUserReportForMarker(widget.marker.id, currentUser.uid);
+    
+    AccessibilityReportModel? existingReport;
+    if (existingReportsResult.isSuccess()) {
+      final reports = existingReportsResult.getOrNull()!;
+      if (reports.isNotEmpty) {
+        existingReport = reports.first;
+      }
+    }
+    
     final TextEditingController commentController = TextEditingController();
+    AccessibilityLevel selectedLevel = level;
+    
+    // Si hay un reporte existente, prellenar los campos
+    if (existingReport != null) {
+      commentController.text = existingReport.comments;
+      selectedLevel = existingReport.level;
+    }
     
     await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Nuevo reporte de ${_getLevelText(level)}',
-          style: TextStyle(color: _getLevelColor(level)),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: commentController,
-              decoration: const InputDecoration(
-                labelText: 'Comentario',
-                hintText: 'Describa la accesibilidad de este lugar',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            existingReport != null 
+                ? 'Editar reporte de ${_getLevelText(selectedLevel)}'
+                : 'Nuevo reporte de ${_getLevelText(selectedLevel)}',
+            style: TextStyle(color: _getLevelColor(selectedLevel)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (existingReport != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Ya tienes un reporte para este lugar. Puedes modificar el texto y nivel de accesibilidad.',
+                          style: TextStyle(fontSize: 13, color: Colors.blue[700]),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              // Selector de nivel de accesibilidad
+              Text(
+                'Nivel de accesibilidad:',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              maxLines: 3,
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildLevelSelector(
+                    level: AccessibilityLevel.good,
+                    selectedLevel: selectedLevel,
+                    onTap: () => setDialogState(() => selectedLevel = AccessibilityLevel.good),
+                  ),
+                  _buildLevelSelector(
+                    level: AccessibilityLevel.medium,
+                    selectedLevel: selectedLevel,
+                    onTap: () => setDialogState(() => selectedLevel = AccessibilityLevel.medium),
+                  ),
+                  _buildLevelSelector(
+                    level: AccessibilityLevel.bad,
+                    selectedLevel: selectedLevel,
+                    onTap: () => setDialogState(() => selectedLevel = AccessibilityLevel.bad),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: commentController,
+                decoration: const InputDecoration(
+                  labelText: 'Comentario',
+                  hintText: 'Describa la accesibilidad de este lugar',
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                if (commentController.text.isNotEmpty) {
+                  if (existingReport != null) {
+                    _updateReport(existingReport, selectedLevel, commentController.text);
+                  } else {
+                    _submitReport(selectedLevel, commentController.text);
+                  }
+                  Navigator.pop(context);
+                }
+              },
+              child: Text(existingReport != null ? 'Actualizar' : 'Enviar'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (commentController.text.isNotEmpty) {
-                _submitReport(level, commentController.text);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Enviar'),
-          ),
-        ],
       ),
     );
-  }    Future<void> _submitReport(AccessibilityLevel level, String comment) async {
+  }
+
+  Widget _buildLevelSelector({
+    required AccessibilityLevel level,
+    required AccessibilityLevel selectedLevel,
+    required VoidCallback onTap,
+  }) {
+    final isSelected = level == selectedLevel;
+    final color = _getLevelColor(level);
+    final icon = _getLevelIcon(level);
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
+          border: Border.all(
+            color: isSelected ? color : Colors.grey,
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: color,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _getLevelText(level),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? color : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData _getLevelIcon(AccessibilityLevel level) {
+    switch (level) {
+      case AccessibilityLevel.good:
+        return Icons.sentiment_very_satisfied;
+      case AccessibilityLevel.medium:
+        return Icons.sentiment_neutral;
+      case AccessibilityLevel.bad:
+        return Icons.sentiment_very_dissatisfied;
+    }
+  }Future<void> _submitReport(AccessibilityLevel level, String comment) async {
     final authService = GetIt.instance<AuthService>();
     final currentUser = authService.currentUser;
     
@@ -701,18 +979,93 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
             backgroundColor: Colors.green,
           ),
         );
+      },      (error) {
+        // Verificar si el error es porque ya existe un reporte
+        if (error.message.contains('ya tiene un reporte')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ya tienes un reporte para este lugar. Si quieres cambiarlo, selecciona el botón correspondiente para editarlo.'),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        } else {
+          // Mostrar otros errores
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error al enviar reporte: ${error.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+    );  }
+  Future<void> _updateReport(AccessibilityReportModel existingReport, AccessibilityLevel level, String comment) async {
+    final authService = GetIt.instance<AuthService>();
+    final currentUser = authService.currentUser;
+    
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes iniciar sesión para actualizar reportes')),
+      );
+      return;
+    }
+    
+    print('Actualizando reporte: ${existingReport.id}');
+    print('Nuevo comentario: $comment');
+    print('Nuevo nivel: $level');
+    
+    // Obtener el nombre del usuario de las shared preferences
+    String userName = existingReport.userName; // Mantener el nombre original por defecto
+    try {
+      final localUserStorage = LocalUserStorageService();
+      final retrievedUserName = await localUserStorage.getUserName();
+      if (retrievedUserName != null && retrievedUserName.isNotEmpty) {
+        userName = retrievedUserName;
+      }
+    } catch (e) {
+      print('Error obteniendo nombre de usuario: $e');
+      // Mantener el nombre original del reporte
+    }
+    
+    final updatedReport = AccessibilityReportModel(
+      id: existingReport.id, // Mantener el mismo ID
+      userId: existingReport.userId, // Mantener el mismo userId
+      userName: userName, // Actualizar el nombre si es necesario
+      comments: comment,
+      level: level,
+    );
+    
+    print('Enviando actualización con ID: ${updatedReport.id}');
+    
+    final result = await _reportService.updateReport(widget.marker.id, updatedReport);
+    
+    result.fold(
+      (success) {
+        print('Reporte actualizado exitosamente');
+        // Recargar los reportes
+        _loadReports();
+        // Mostrar confirmación
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Reporte actualizado correctamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
       },
       (error) {
+        print('Error al actualizar reporte: ${error.message}');
         // Mostrar error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al enviar reporte: ${error.message}'),
+            content: Text('Error al actualizar reporte: ${error.message}'),
             backgroundColor: Colors.red,
           ),
         );
       },
     );
   }
+
   Color _getLevelColor(AccessibilityLevel level) {
     switch (level) {
       case AccessibilityLevel.good:

@@ -35,11 +35,23 @@ class FirebaseAccessibilityReportService implements IAccessibilityReportService 
       );
     }
   }
-
   @override
   Future<ResultDart<AccessibilityReportModel, AccessibilityReportException>> 
       addReport(String markerId, AccessibilityReportModel report) async {
     try {
+      // Primero verificar si el usuario ya tiene un reporte para este marcador
+      final existingReportsResult = await getUserReportForMarker(markerId, report.userId);
+      if (existingReportsResult.isError()) {
+        return Failure(existingReportsResult.exceptionOrNull()!);
+      }
+      
+      final existingReports = existingReportsResult.getOrNull()!;
+      if (existingReports.isNotEmpty) {
+        return Failure(
+          AccessibilityReportException('El usuario ya tiene un reporte para este lugar. Use updateReport para modificarlo.'),
+        );
+      }
+
       final reportRef = _firestore
           .collection('places')
           .doc(markerId)
@@ -66,6 +78,73 @@ class FirebaseAccessibilityReportService implements IAccessibilityReportService 
     } catch (e) {
       return Failure(
         AccessibilityReportException('Error al guardar reporte: ${e.toString()}'),
+      );
+    }
+  }
+
+  @override
+  Future<ResultDart<List<AccessibilityReportModel>, AccessibilityReportException>> 
+      getUserReportForMarker(String markerId, String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('places')
+          .doc(markerId)
+          .collection('accessibility_reports')
+          .where('user_id', isEqualTo: userId)
+          .get();
+
+      final reports = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id; // Asegurar que el ID del documento se incluya
+        final dto = AccessibilityReportDto.fromJson(data);
+        return dto.toDomain();
+      }).toList();
+
+      return Success(reports);
+    } catch (e) {
+      return Failure(
+        AccessibilityReportException('Error al obtener reporte del usuario: ${e.toString()}'),
+      );
+    }
+  }
+  @override
+  Future<ResultDart<AccessibilityReportModel, AccessibilityReportException>> 
+      updateReport(String markerId, AccessibilityReportModel report) async {
+    try {
+      print('Firebase: Actualizando reporte ${report.id} para marcador $markerId');
+      
+      final reportRef = _firestore
+          .collection('places')
+          .doc(markerId)
+          .collection('accessibility_reports')
+          .doc(report.id);
+
+      // Verificar que el reporte existe
+      final doc = await reportRef.get();
+      if (!doc.exists) {
+        print('Firebase: El reporte ${report.id} no existe');
+        return Failure(
+          AccessibilityReportException('No se encontró el reporte a actualizar'),
+        );
+      }
+
+      final dto = AccessibilityReportDto.fromDomain(report);
+      final data = dto.toJson();
+      
+      print('Firebase: Datos a actualizar: $data');
+      
+      // Mantener la fecha de creación original y actualizar la fecha de modificación
+      data['updated_at'] = FieldValue.serverTimestamp();
+
+      await reportRef.update(data);
+      
+      print('Firebase: Reporte actualizado exitosamente');
+
+      return Success(report);
+    } catch (e) {
+      print('Firebase: Error al actualizar reporte: $e');
+      return Failure(
+        AccessibilityReportException('Error al actualizar reporte: ${e.toString()}'),
       );
     }
   }

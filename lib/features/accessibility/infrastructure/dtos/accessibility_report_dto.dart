@@ -22,10 +22,9 @@ class AccessibilityReportDto {
       comments: json['comments'] as String? ?? '',
       level: _stringToAccessibilityLevel(json['accessibility_level'] as String? ?? 'medium'),
     );
-  }
-  Map<String, dynamic> toJson() {
+  }  Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      // No incluir 'id' en toJson() porque es el ID del documento de Firestore
       'user_id': userId,
       'user_name': userName,
       'comments': comments,
