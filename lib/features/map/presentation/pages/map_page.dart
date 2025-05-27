@@ -42,6 +42,7 @@ class MapView extends StatefulWidget {
 
 class _MapViewState extends State<MapView> {
   final ValueNotifier<bool> isChallengesPanelExpanded = ValueNotifier<bool>(false);
+  final MapController _mapController = MapController();
   bool _isAuthenticated = false;
 
   @override
@@ -56,8 +57,7 @@ class _MapViewState extends State<MapView> {
       }
     });
   }
-  
-  void _updateAuthState() {
+    void _updateAuthState() {
     setState(() {
       _isAuthenticated = authService.currentUser != null;
       // Si el usuario cierra sesión y el panel está abierto, cerrarlo
@@ -65,8 +65,17 @@ class _MapViewState extends State<MapView> {
         isChallengesPanelExpanded.value = false;
       }
     });
+  }  /// Centra el mapa en la ubicación actual del usuario
+  void _centerMapOnCurrentLocation(LatLng location) {
+    final currentCenter = _mapController.camera.center;
+    final distance = const Distance().as(LengthUnit.Meter, currentCenter, location);
+    
+    // Solo mover si la ubicación está lo suficientemente lejos (más de 50 metros)
+    if (distance > 50) {
+      // Centrar el mapa en la nueva ubicación con un zoom apropiado
+      _mapController.move(location, 17.0);
+    }
   }
-
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
@@ -75,9 +84,16 @@ class _MapViewState extends State<MapView> {
     return Scaffold(
       body: BlocBuilder<MarkerCubit, MarkerState>(
         builder: (context, state) {
-          return Stack(            children: [
-              // Mapa principal
+          // Centrar el mapa cuando se obtenga la ubicación actual
+          if (state.hasCurrentLocation) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _centerMapOnCurrentLocation(state.currentLocation!.position);
+            });
+          }
+          
+          return Stack(children: [              // Mapa principal
               FlutterMap(
+                mapController: _mapController,
                 options: MapOptions(
                   initialCenter: state.currentLocation?.position ?? 
                       const LatLng(41.6560, -0.8773), // Centro por defecto (Zaragoza)
@@ -190,14 +206,17 @@ class _MapViewState extends State<MapView> {
                       child: Icon(
                         Icons.my_location,
                         color: isHighContrastMode ? Colors.black : Colors.black87,
-                      ),
-                      onPressed: () async {
+                      ),                      onPressed: () async {
                         await context.read<MarkerCubit>().getCurrentLocation();
-                        // Si tenemos ubicación actual, actualizamos los marcadores cercanos
-                        if (state.hasCurrentLocation) {
+                        // Obtener el estado actualizado después de cargar la ubicación
+                        final currentState = context.read<MarkerCubit>().state;
+                        if (currentState.hasCurrentLocation) {
+                          // Centrar el mapa en la ubicación actual
+                          _centerMapOnCurrentLocation(currentState.currentLocation!.position);
+                          // Actualizar los marcadores cercanos
                           await context.read<MarkerCubit>().getNearbyMarkers(
-                            latitude: state.currentLocation!.position.latitude,
-                            longitude: state.currentLocation!.position.longitude,
+                            latitude: currentState.currentLocation!.position.latitude,
+                            longitude: currentState.currentLocation!.position.longitude,
                           );
                         }
                       },
@@ -214,9 +233,16 @@ class _MapViewState extends State<MapView> {
                       child: Icon(
                         Icons.replay,
                         color: isHighContrastMode ? Colors.black : Colors.black87,
-                      ),
-                      onPressed: () {
-                        // Implementar reset de vista
+                      ),                      onPressed: () {
+                        // Centrar en la ubicación actual si está disponible
+                        if (state.hasCurrentLocation) {
+                          _centerMapOnCurrentLocation(state.currentLocation!.position);
+                        } else {
+                          // Si no hay ubicación actual, centrar en Zaragoza
+                          _mapController.move(const LatLng(41.6560, -0.8773), 15.0);
+                        }
+                        // Limpiar marcador seleccionado y rutas
+                        context.read<MarkerCubit>().clearSelectedMarker();
                       },
                     ),
                     
