@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import '../../../accessibility/presentation/providers/accessibility_provider.dar
 import '../../domain/marker_model.dart';
 import '../../../accessibility/domain/community_validation_model.dart';
 import '../../../accessibility/domain/i_community_validation_service.dart';
+import '../../../accessibility/infrastructure/services/community_validation_service.dart';
 import '../../application/marker_cubit.dart';
 import '../../../auth/service/auth_service.dart';
 import '../../../users/presentation/widgets/b_points_widget.dart';
@@ -84,26 +86,46 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       },
     );
   }
-    Future<void> _loadValidations() async {
+  Future<void> _loadValidations() async {
     try {
+      print('Loading validations for marker: ${widget.marker.id}');
       final result = await _validationService.getValidationsForMarker(widget.marker.id);
       result.fold(
         (validations) {
+          print('Loaded ${validations.length} validations successfully');
           setState(() {
             _validations = validations;
           });
         },
         (error) {
-          // Manejar error silenciosamente - no mostrar al usuario
           print('Error loading validations: $error');
           setState(() {
             _validations = [];
           });
         },
       );
+      
+      // En modo debug, limpiar validaciones obsoletas una sola vez
+      if (kDebugMode && _validations?.isEmpty == true) {
+        print('Running obsolete validations cleanup...');
+        if (_validationService is CommunityValidationService) {
+          await (_validationService as CommunityValidationService).cleanObsoleteValidations();
+          // Recargar después de la limpieza
+          final reloadResult = await _validationService.getValidationsForMarker(widget.marker.id);
+          reloadResult.fold(
+            (validations) {
+              setState(() {
+                _validations = validations;
+              });
+            },
+            (error) {
+              print('Error reloading validations after cleanup: $error');
+            },
+          );
+        }
+      }
     } catch (e) {
-      // Manejar excepción silenciosamente - no mostrar al usuario
-      print('Exception loading validations: $e');
+      print('Exception in _loadValidations: $e');
       setState(() {
         _validations = [];
       });
@@ -972,15 +994,17 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
           );
         }
         return;
-      }
-
-      // Verificar si la validación existe, si no, crearla
+      }      // Verificar si la validación existe, si no, crearla
       final validationExists = _validations?.any((v) => v.questionType == questionType) ?? false;
-        if (!validationExists) {
+      print('Validation exists for ${questionType}: $validationExists');
+      
+      if (!validationExists) {
+        print('Creating new validation for ${questionType}');
         // Crear la validación primero
         final createResult = await _validationService.createValidation(widget.marker.id, questionType);
         createResult.fold(
           (newValidation) {
+            print('Successfully created validation: ${newValidation.id}');
             setState(() {
               _validations = [...(_validations ?? []), newValidation];
             });

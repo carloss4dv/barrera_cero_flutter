@@ -10,7 +10,6 @@ class CommunityValidationService implements ICommunityValidationService {
   static const int _defaultVotesNeeded = 10;
 
   CommunityValidationService(this._firestore, this._userService);
-
   @override
   Future<Result<List<CommunityValidationModel>>> getValidationsForMarker(String markerId) async {
     try {
@@ -20,15 +19,31 @@ class CommunityValidationService implements ICommunityValidationService {
           .collection('validations')
           .get();
 
-      final validations = snapshot.docs.map((doc) {
-        return CommunityValidationModel.fromJson(doc.data());
-      }).toList();
+      final validations = <CommunityValidationModel>[];
+      
+      for (final doc in snapshot.docs) {
+        try {
+          final validation = CommunityValidationModel.fromJson(doc.data());
+          validations.add(validation);
+        } catch (e) {
+          // Ignorar validaciones con tipos de pregunta no válidos (datos obsoletos)
+          print('Ignorando validación con tipo no válido: ${doc.data()['questionType']} - Error: $e');
+          
+          // Opcionalmente eliminar el documento obsoleto
+          try {
+            await doc.reference.delete();
+            print('Eliminado documento obsoleto: ${doc.id}');
+          } catch (deleteError) {
+            print('Error al eliminar documento obsoleto: $deleteError');
+          }
+        }
+      }
 
       return Success(validations);
     } catch (e) {
       return Failure(Exception('Error al cargar validaciones: $e'));
     }
-  }  @override
+  }@override
   Future<Result<CommunityValidationModel>> addVote(
     String markerId,
     ValidationQuestionType questionType,
@@ -36,17 +51,22 @@ class CommunityValidationService implements ICommunityValidationService {
     String userId,
   ) async {
     try {
+      print('Adding vote: markerId=$markerId, questionType=$questionType, isPositive=$isPositive, userId=$userId');
+      
       final validationRef = _firestore
           .collection('places')
           .doc(markerId)
           .collection('validations')
           .doc(questionType.toString());
 
+      print('Validation ref path: ${validationRef.path}');
+
       final transactionResult = await _firestore.runTransaction<Result<CommunityValidationModel>>((transaction) async {
         final doc = await transaction.get(validationRef);
         CommunityValidationModel validation;
 
         if (!doc.exists) {
+          print('Document does not exist, creating new validation');
           validation = CommunityValidationModel(
             id: questionType.toString(),
             markerId: markerId,
@@ -102,13 +122,14 @@ class CommunityValidationService implements ICommunityValidationService {
       return Failure(Exception('Error al registrar voto: $e'));
     }
   }
-
   @override
   Future<Result<CommunityValidationModel>> createValidation(
     String markerId,
     ValidationQuestionType questionType,
   ) async {
     try {
+      print('Creating validation: markerId=$markerId, questionType=$questionType');
+      
       final validation = CommunityValidationModel(
         id: questionType.toString(),
         markerId: markerId,
@@ -120,16 +141,61 @@ class CommunityValidationService implements ICommunityValidationService {
         votedUserIds: [],
       );
 
-      await _firestore
+      final docRef = _firestore
           .collection('places')
           .doc(markerId)
           .collection('validations')
-          .doc(questionType.toString())
-          .set(validation.toJson());
+          .doc(questionType.toString());
 
+      print('Creating validation at path: ${docRef.path}');
+      
+      await docRef.set(validation.toJson());
+
+      print('Successfully created validation: ${validation.id}');
       return Success(validation);
     } catch (e) {
       return Failure(Exception('Error al crear validación: $e'));
+    }
+  }
+
+  /// Método para limpiar todas las validaciones obsoletas de Firebase
+  /// Esto incluye validaciones con tipos de pregunta que ya no existen
+  Future<void> cleanObsoleteValidations() async {
+    try {
+      print('Iniciando limpieza de validaciones obsoletas...');
+      
+      // Obtener todos los lugares
+      final placesSnapshot = await _firestore.collection('places').get();
+      
+      int totalObsolete = 0;
+      int totalCleaned = 0;
+      
+      for (final placeDoc in placesSnapshot.docs) {
+        final validationsSnapshot = await placeDoc.reference.collection('validations').get();
+        
+        for (final validationDoc in validationsSnapshot.docs) {
+          try {
+            // Intentar deserializar la validación
+            CommunityValidationModel.fromJson(validationDoc.data());
+          } catch (e) {
+            // Si falla la deserialización, es porque el tipo de pregunta no es válido
+            totalObsolete++;
+            print('Encontrada validación obsoleta en lugar ${placeDoc.id}: ${validationDoc.data()['questionType']}');
+            
+            try {
+              await validationDoc.reference.delete();
+              totalCleaned++;
+              print('Eliminada validación obsoleta: ${validationDoc.id}');
+            } catch (deleteError) {
+              print('Error al eliminar validación obsoleta ${validationDoc.id}: $deleteError');
+            }
+          }
+        }
+      }
+      
+      print('Limpieza completada: $totalCleaned/$totalObsolete validaciones obsoletas eliminadas');
+    } catch (e) {
+      print('Error durante la limpieza de validaciones obsoletas: $e');
     }
   }
 }
