@@ -838,9 +838,14 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
     final authService = GetIt.instance<AuthService>();
     final bool isAuthenticated = authService.currentUser != null;
-    
-    // Verificar si esta validación realmente existe
+      // Verificar si esta validación realmente existe
     final validationExists = _validations?.any((v) => v.questionType == questionType) ?? false;
+    
+    // Verificar si el usuario ya ha votado
+    final currentUserId = authService.currentUser?.uid;
+    final hasUserVoted = validationExists && 
+        currentUserId != null && 
+        validation!.votedUserIds.contains(currentUserId);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -855,23 +860,49 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         const SizedBox(height: 8),
         // Mostrar botones de voto solo si el usuario está autenticado
         if (isAuthenticated)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildVoteButton(
-                icon: Icons.check_circle,
-                label: 'Sí',
-                color: Colors.green,
-                onTap: () => _handleVote(questionType, true),
-              ),
-              _buildVoteButton(
-                icon: Icons.cancel,
-                label: 'No',
-                color: Colors.red,
-                onTap: () => _handleVote(questionType, false),
-              ),
-            ],
-          )
+          hasUserVoted
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Ya has votado en esta pregunta',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildVoteButton(
+                      icon: Icons.check_circle,
+                      label: 'Sí',
+                      color: Colors.green,
+                      onTap: () => _handleVote(questionType, true),
+                    ),
+                    _buildVoteButton(
+                      icon: Icons.cancel,
+                      label: 'No',
+                      color: Colors.red,
+                      onTap: () => _handleVote(questionType, false),
+                    ),
+                  ],
+                )
         else
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -1068,8 +1099,21 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
             );
           }        },
         (failure) {
-          // Manejar error de voto silenciosamente - no mostrar al usuario
-          print('Vote failed: $failure');
+          // Verificar si el error es porque ya ha votado
+          if (failure.toString().contains('Ya has votado')) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Ya has votado en esta pregunta'),
+                  backgroundColor: Colors.orange,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          } else {
+            // Para otros errores, mantener el comportamiento silencioso
+            print('Vote failed: $failure');
+          }
         },
       );
     } catch (e) {
