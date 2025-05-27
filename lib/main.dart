@@ -10,6 +10,8 @@ import 'features/auth/presentation/login_page.dart';
 import 'features/auth/presentation/register_pages.dart';
 import 'features/users/presentation/profile_page.dart';
 import 'features/map/infrastructure/providers/map_filters_provider.dart';
+import 'features/map/infrastructure/providers/navigation_state_provider.dart';
+import 'features/map/infrastructure/providers/navigation_observer.dart';
 import 'features/forum/presentation/screens/forum_screen.dart';
 import 'features/forum/di/forum_module.dart';
 import 'features/notifications/infrastructure/services/firebase_messaging_service.dart';
@@ -55,8 +57,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
+    return MultiProvider(      providers: [
         // ... tus providers existentes ...
         
         // Añadir el provider de accesibilidad
@@ -64,11 +65,14 @@ class MyApp extends StatelessWidget {
         
         // Añadir el provider de filtros del mapa
         ChangeNotifierProvider(create: (_) => MapFiltersProvider()),
-      ],
-      child: Consumer<AccessibilityProvider>(
+        
+        // Añadir el provider de estado de navegación
+        ChangeNotifierProvider(create: (_) => NavigationStateProvider()),
+      ],      child: Consumer<AccessibilityProvider>(
         builder: (context, accessibilityProvider, _) {
           return MaterialApp(
             title: 'Barrera Cero',
+            navigatorObservers: [NavigationObserver()],
             theme: accessibilityProvider.getTheme(ThemeData(
               useMaterial3: true,
               colorScheme: ColorScheme.fromSeed(

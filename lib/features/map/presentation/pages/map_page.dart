@@ -7,7 +7,6 @@ import 'dart:math' as math;
 
 import '../../application/marker_cubit.dart';
 import '../../application/marker_state.dart';
-import '../../domain/marker_model.dart';
 import '../../domain/route_segment_model.dart';
 import '../widgets/accessibility_filter.dart';
 import '../widgets/custom_map_marker.dart';
@@ -17,9 +16,8 @@ import '../../../accessibility/presentation/providers/accessibility_provider.dar
 import '../../../accessibility/domain/accessibility_level.dart';
 import '../../../challenges/presentation/widgets/challenges_panel.dart';
 import '../../../../main.dart';
-import '../../infrastructure/providers/map_filters_provider.dart';
+import '../../infrastructure/providers/navigation_state_provider.dart';
 import '../../infrastructure/services/run_upload_mock_data.dart';
-import '../../../accessibility/infrastructure/services/run_upload_validation_mock_data.dart';
 import '../../../auth/service/auth_service.dart';
 
 class MapPage extends StatelessWidget {
@@ -149,9 +147,14 @@ class _MapViewState extends State<MapView> {
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isHighContrastMode = accessibilityProvider.highContrastMode;
-      return Scaffold(
-      body: BlocBuilder<MarkerCubit, MarkerState>(
+    final isHighContrastMode = accessibilityProvider.highContrastMode;      return Scaffold(
+      body: BlocListener<MarkerCubit, MarkerState>(
+        listener: (context, state) {
+          // Update navigation state when marker detail visibility changes
+          final navigationProvider = context.read<NavigationStateProvider>();
+          navigationProvider.setMarkerDetailVisible(state.hasSelectedMarker);
+        },
+        child: BlocBuilder<MarkerCubit, MarkerState>(
         builder: (context, state) {
           // Centrar el mapa cuando se obtenga la ubicación actual
           if (state.hasCurrentLocation) {
@@ -273,14 +276,19 @@ class _MapViewState extends State<MapView> {
                     },
                   ),
                 ),
-                
-              // Botones de acción flotantes
-              Positioned(
-                right: 16,
-                bottom: 16,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                  // Botones de acción flotantes
+              Consumer<NavigationStateProvider>(
+                builder: (context, navigationState, child) {
+                  if (!navigationState.shouldShowFloatingButtons) {
+                    return const SizedBox.shrink();
+                  }
+                  
+                  return Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     // Botón para ubicación actual
                     FloatingActionButton(
                       heroTag: 'current_location',
@@ -343,14 +351,18 @@ class _MapViewState extends State<MapView> {
                       child: Icon(
                         Icons.accessibility_new,
                         color: isHighContrastMode ? Colors.black : Colors.black87,
-                      ),
-                      onPressed: () {
+                      ),                      onPressed: () {
+                        // Update navigation state before navigating
+                        context.read<NavigationStateProvider>().navigatedToMenu();
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const AccessibilitySettingsPage(),
                           ),
-                        );
+                        ).then((_) {
+                          // Update navigation state when returning
+                          context.read<NavigationStateProvider>().navigatedBackToMap();
+                        });
                       },
                     ),
                       const SizedBox(height: 8),
@@ -383,10 +395,14 @@ class _MapViewState extends State<MapView> {
                       child: Icon(
                         Icons.forum,
                         color: isHighContrastMode ? Colors.black : Colors.black87,
-                      ),
-                      onPressed: () {
+                      ),                      onPressed: () {
                         if (_isAuthenticated) {
-                          Navigator.pushNamed(context, '/forum');
+                          // Update navigation state before navigating
+                          context.read<NavigationStateProvider>().navigatedToMenu();
+                          Navigator.pushNamed(context, '/forum').then((_) {
+                            // Update navigation state when returning
+                            context.read<NavigationStateProvider>().navigatedBackToMap();
+                          });
                         } else {
                           // Mostrar diálogo para iniciar sesión
                           showDialog(
@@ -404,7 +420,12 @@ class _MapViewState extends State<MapView> {
                                 TextButton(
                                   onPressed: () {
                                     Navigator.pop(context);
-                                    Navigator.pushNamed(context, '/login');
+                                    // Update navigation state before navigating to login
+                                    context.read<NavigationStateProvider>().navigatedToMenu();
+                                    Navigator.pushNamed(context, '/login').then((_) {
+                                      // Update navigation state when returning
+                                      context.read<NavigationStateProvider>().navigatedBackToMap();
+                                    });
                                   },
                                   child: const Text('Iniciar Sesión'),
                                 ),
@@ -412,7 +433,7 @@ class _MapViewState extends State<MapView> {
                             ),
                           );
                         }
-                      },                      ),
+                      },),
                       const SizedBox(height: 8),
                     
                     // Botón temporal para subir datos mock (oculto pero código preservado)
@@ -428,11 +449,12 @@ class _MapViewState extends State<MapView> {
                           color: isHighContrastMode ? Colors.black : Colors.black87,
                         ),
                         onPressed: () {
-                          runUploadMockData();
-                        },
+                          runUploadMockData();                        },
                       ),
                   ],
                 ),
+                  );
+                },
               ),              // Challenges Panel (solo visible si hay usuario autenticado)
               if (_isAuthenticated)
                 ValueListenableBuilder<bool>(
@@ -488,10 +510,10 @@ class _MapViewState extends State<MapView> {
                       ),
                     ),
                   ),
-                ),
-            ],
+                ),            ],
           );
         },
+        ),
       ),
     );
   }
