@@ -20,7 +20,6 @@ class CustomMapMarker extends StatelessWidget {
     this.isSelected = false,
     required this.onTap,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
@@ -28,7 +27,13 @@ class CustomMapMarker extends StatelessWidget {
     final isHighContrastMode = accessibilityProvider.highContrastMode;
     
     // Verificar si el marcador debe mostrarse según los filtros
-    if (!mapFiltersProvider.shouldShowMarker(marker.metadata.toJson())) {
+    // Crear un mapa que incluya tanto los metadatos como el tipo del marcador
+    final markerData = {
+      ...marker.metadata.toJson(),
+      'type': marker.type.toString().split('.').last, // Convertir enum a string
+    };
+    
+    if (!mapFiltersProvider.shouldShowMarker(markerData)) {
       return const SizedBox.shrink();
     }
 
