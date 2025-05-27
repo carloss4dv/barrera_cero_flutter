@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 
 import '../../application/marker_cubit.dart';
 import '../../application/marker_state.dart';
@@ -44,6 +45,7 @@ class _MapViewState extends State<MapView> {
   final ValueNotifier<bool> isChallengesPanelExpanded = ValueNotifier<bool>(false);
   final MapController _mapController = MapController();
   bool _isAuthenticated = false;
+  String? _previousSelectedMarkerId;
 
   @override
   void initState() {
@@ -76,12 +78,60 @@ class _MapViewState extends State<MapView> {
       _mapController.move(location, 17.0);
     }
   }
+
+  /// Ajusta el mapa para mostrar tanto la ubicación actual como el marcador seleccionado
+  void _fitMapToBothLocations(LatLng currentLocation, LatLng selectedLocation) {
+    // Calcular los límites para incluir ambas ubicaciones
+    final double minLat = math.min(currentLocation.latitude, selectedLocation.latitude);
+    final double maxLat = math.max(currentLocation.latitude, selectedLocation.latitude);
+    final double minLng = math.min(currentLocation.longitude, selectedLocation.longitude);
+    final double maxLng = math.max(currentLocation.longitude, selectedLocation.longitude);
+    
+    // Añadir un padding para que no estén en el borde
+    final double latPadding = (maxLat - minLat) * 0.2; // 20% de padding
+    final double lngPadding = (maxLng - minLng) * 0.2; // 20% de padding
+    
+    // Si los puntos están muy cerca, usar un padding mínimo
+    final double minPadding = 0.002; // aproximadamente 200 metros
+    final double finalLatPadding = math.max(latPadding, minPadding);
+    final double finalLngPadding = math.max(lngPadding, minPadding);
+    
+    // Crear los bounds con padding
+    final LatLngBounds bounds = LatLngBounds(
+      LatLng(minLat - finalLatPadding, minLng - finalLngPadding),
+      LatLng(maxLat + finalLatPadding, maxLng + finalLngPadding),
+    );
+    
+    // Calcular el centro
+    final LatLng center = LatLng(
+      (bounds.north + bounds.south) / 2,
+      (bounds.east + bounds.west) / 2,
+    );
+    
+    // Calcular un zoom apropiado basado en la distancia
+    final double distance = const Distance().as(LengthUnit.Meter, currentLocation, selectedLocation);
+    double zoom;
+    
+    if (distance < 500) {
+      zoom = 17.0; // Muy cerca
+    } else if (distance < 1000) {
+      zoom = 16.0; // Cerca
+    } else if (distance < 2000) {
+      zoom = 15.0; // Media distancia
+    } else if (distance < 5000) {
+      zoom = 14.0; // Lejos
+    } else {
+      zoom = 13.0; // Muy lejos
+    }
+    
+    // Mover el mapa al centro calculado con el zoom apropiado
+    _mapController.move(center, zoom);
+  }
   @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
     final isHighContrastMode = accessibilityProvider.highContrastMode;
-    
-    return Scaffold(
+      return Scaffold(
       body: BlocBuilder<MarkerCubit, MarkerState>(
         builder: (context, state) {
           // Centrar el mapa cuando se obtenga la ubicación actual
@@ -89,6 +139,22 @@ class _MapViewState extends State<MapView> {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _centerMapOnCurrentLocation(state.currentLocation!.position);
             });
+          }
+            // Ajustar el mapa cuando se selecciona un marcador diferente
+          if (state.hasSelectedMarker && state.hasCurrentLocation) {
+            final currentSelectedId = state.selectedMarker!.id;
+            if (_previousSelectedMarkerId != currentSelectedId) {
+              _previousSelectedMarkerId = currentSelectedId;
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _fitMapToBothLocations(
+                  state.currentLocation!.position,
+                  state.selectedMarker!.position,
+                );
+              });
+            }
+          } else if (!state.hasSelectedMarker) {
+            // Reset previous selected marker when no marker is selected
+            _previousSelectedMarkerId = null;
           }
           
           return Stack(children: [              // Mapa principal
@@ -511,4 +577,4 @@ class _MapViewState extends State<MapView> {
     
     return colors;
   }
-} 
+}
