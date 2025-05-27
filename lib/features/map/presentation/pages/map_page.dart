@@ -86,13 +86,24 @@ class _MapViewState extends State<MapView> {
     final double maxLat = math.max(currentLocation.latitude, selectedLocation.latitude);
     final double minLng = math.min(currentLocation.longitude, selectedLocation.longitude);
     final double maxLng = math.max(currentLocation.longitude, selectedLocation.longitude);
+      // Añadir un padding proporcional a la distancia
+    final double distance = const Distance().as(LengthUnit.Meter, currentLocation, selectedLocation);
     
-    // Añadir un padding para que no estén en el borde
-    final double latPadding = (maxLat - minLat) * 0.2; // 20% de padding
-    final double lngPadding = (maxLng - minLng) * 0.2; // 20% de padding
+    // Calcular padding basado en la distancia
+    double paddingFactor;
+    if (distance < 1000) {
+      paddingFactor = 0.3; // 30% para distancias cortas
+    } else if (distance < 5000) {
+      paddingFactor = 0.25; // 25% para distancias medias
+    } else {
+      paddingFactor = 0.2; // 20% para distancias largas
+    }
     
-    // Si los puntos están muy cerca, usar un padding mínimo
-    final double minPadding = 0.002; // aproximadamente 200 metros
+    final double latPadding = (maxLat - minLat) * paddingFactor;
+    final double lngPadding = (maxLng - minLng) * paddingFactor;
+    
+    // Si los puntos están muy cerca, usar un padding mínimo proporcional
+    final double minPadding = distance < 1000 ? 0.003 : 0.002; // Más padding para distancias cortas
     final double finalLatPadding = math.max(latPadding, minPadding);
     final double finalLngPadding = math.max(lngPadding, minPadding);
     
@@ -105,23 +116,31 @@ class _MapViewState extends State<MapView> {
     // Calcular el centro
     final LatLng center = LatLng(
       (bounds.north + bounds.south) / 2,
-      (bounds.east + bounds.west) / 2,
-    );
-    
-    // Calcular un zoom apropiado basado en la distancia
-    final double distance = const Distance().as(LengthUnit.Meter, currentLocation, selectedLocation);
+      (bounds.east + bounds.west) / 2,    );      // Calcular un zoom apropiado basado en la distancia ya calculada
     double zoom;
     
-    if (distance < 500) {
-      zoom = 17.0; // Muy cerca
-    } else if (distance < 1000) {
-      zoom = 16.0; // Cerca
+    if (distance < 300) {
+      zoom = 16.0; // Muy cerca (reducido de 17.0)
+    } else if (distance < 500) {
+      zoom = 15.5; // Muy cerca-cerca (reducido de 16.5)
+    } else if (distance < 800) {
+      zoom = 15.0; // Cerca (reducido de 16.0)
+    } else if (distance < 1200) {
+      zoom = 14.5; // Cerca-media (reducido de 15.5)
     } else if (distance < 2000) {
-      zoom = 15.0; // Media distancia
+      zoom = 14.0; // Media distancia (reducido de 15.0)
+    } else if (distance < 3000) {
+      zoom = 13.5; // Media-lejos (reducido de 14.5)
     } else if (distance < 5000) {
-      zoom = 14.0; // Lejos
+      zoom = 13.0; // Lejos (reducido de 14.0)
+    } else if (distance < 8000) {
+      zoom = 12.5; // Muy lejos (reducido de 13.5)
+    } else if (distance < 12000) {
+      zoom = 12.0; // Bastante lejos (reducido de 13.0)
+    } else if (distance < 20000) {
+      zoom = 11.5; // Muy lejos (reducido de 12.5)
     } else {
-      zoom = 13.0; // Muy lejos
+      zoom = 11.0; // Extremadamente lejos (reducido de 12.0)
     }
     
     // Mover el mapa al centro calculado con el zoom apropiado
