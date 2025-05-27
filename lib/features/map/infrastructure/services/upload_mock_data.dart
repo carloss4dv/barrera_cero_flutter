@@ -137,20 +137,14 @@ class MockDataUploader {
         return 'Sin reportes de accesibilidad';
     }
   }
-
   // Función para generar votos de validación
-  Future<void> _generateValidationVotes(String markerId, int accessibilityScore) async {
-    final questionTypes = [
+  Future<void> _generateValidationVotes(String markerId, int accessibilityScore) async {    final questionTypes = [
       ValidationQuestionType.rampExists,
-      ValidationQuestionType.rampCondition,
-      ValidationQuestionType.rampWidth,
-      ValidationQuestionType.rampSlope,
-      ValidationQuestionType.rampHandrails,
-      ValidationQuestionType.rampLanding,
-      ValidationQuestionType.rampObstacles,
-      ValidationQuestionType.rampSurface,
-      ValidationQuestionType.rampVisibility,
-      ValidationQuestionType.rampMaintenance,
+      ValidationQuestionType.elevatorExists,
+      ValidationQuestionType.accessibleBathroomExists,
+      ValidationQuestionType.brailleSignageExists,
+      ValidationQuestionType.audioGuidanceExists,
+      ValidationQuestionType.tactilePavementExists,
     ];
 
     for (final questionType in questionTypes) {

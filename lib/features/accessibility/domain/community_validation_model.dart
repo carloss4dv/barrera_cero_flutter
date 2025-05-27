@@ -1,37 +1,23 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'accessibility_report_model.dart';
 
 part 'community_validation_model.freezed.dart';
 part 'community_validation_model.g.dart';
 
 /// Enum que representa los tipos de preguntas de validación
 enum ValidationQuestionType {
+  // Preguntas sobre existencia de elementos de accesibilidad
   @JsonValue('ramp_exists')
   rampExists,
-  @JsonValue('ramp_condition')
-  rampCondition,
-  @JsonValue('ramp_width')
-  rampWidth,
-  @JsonValue('ramp_slope')
-  rampSlope,
-  @JsonValue('ramp_handrails')
-  rampHandrails,
-  @JsonValue('ramp_landing')
-  rampLanding,
-  @JsonValue('ramp_obstacles')
-  rampObstacles,
-  @JsonValue('ramp_surface')
-  rampSurface,
-  @JsonValue('ramp_visibility')
-  rampVisibility,
-  @JsonValue('ramp_maintenance')
-  rampMaintenance,
-  @JsonValue('stairs_exist')
-  stairsExist,
-  @JsonValue('slope')
-  slope,
-  @JsonValue('surface_type')
-  surfaceType,
+  @JsonValue('elevator_exists')
+  elevatorExists,
+  @JsonValue('accessible_bathroom_exists')
+  accessibleBathroomExists,
+  @JsonValue('braille_signage_exists')
+  brailleSignageExists,
+  @JsonValue('audio_guidance_exists')
+  audioGuidanceExists,
+  @JsonValue('tactile_pavement_exists')
+  tactilePavementExists,
 }
 
 /// Enum que representa el estado de una validación
@@ -98,36 +84,42 @@ class CommunityValidationModel with _$CommunityValidationModel {
     // Calculando el progreso basado en la diferencia entre votos positivos y negativos
     final voteDifference = positiveVotes - negativeVotes;
     return voteDifference / totalVotesNeeded;
-  }
-
-  String getQuestionText() {
+  }  String getQuestionText() {
     switch (questionType) {
+      // Preguntas sobre existencia de elementos de accesibilidad
       case ValidationQuestionType.rampExists:
         return '¿Existe una rampa en este lugar?';
-      case ValidationQuestionType.rampCondition:
-        return '¿En qué estado se encuentra la rampa?';
-      case ValidationQuestionType.rampWidth:
-        return '¿La rampa tiene el ancho adecuado?';
-      case ValidationQuestionType.rampSlope:
-        return '¿La pendiente de la rampa es adecuada?';
-      case ValidationQuestionType.rampHandrails:
-        return '¿La rampa tiene pasamanos?';
-      case ValidationQuestionType.rampLanding:
-        return '¿La rampa tiene plataforma de descanso?';
-      case ValidationQuestionType.rampObstacles:
-        return '¿Hay obstáculos en la rampa?';
-      case ValidationQuestionType.rampSurface:
-        return '¿La superficie de la rampa es adecuada?';
-      case ValidationQuestionType.rampVisibility:
-        return '¿La rampa es visible y accesible?';
-      case ValidationQuestionType.rampMaintenance:
-        return '¿La rampa está bien mantenida?';
-      case ValidationQuestionType.stairsExist:
-        return '¿Existe una escalera en este lugar?';
-      case ValidationQuestionType.slope:
-        return '¿La pendiente de la rampa es adecuada?';
-      case ValidationQuestionType.surfaceType:
-        return '¿El tipo de superficie de la rampa es adecuado?';
+      case ValidationQuestionType.elevatorExists:
+        return '¿Existe un ascensor en este lugar?';
+      case ValidationQuestionType.accessibleBathroomExists:
+        return '¿Existe un baño accesible en este lugar?';
+      case ValidationQuestionType.brailleSignageExists:
+        return '¿Existe señalización en Braille en este lugar?';      
+      case ValidationQuestionType.audioGuidanceExists:
+        return '¿Existe guía de audio en este lugar?';
+      case ValidationQuestionType.tactilePavementExists:
+        return '¿Existe pavimento táctil en este lugar?';
     }
   }
-} 
+}
+
+/// Extensión para ValidationQuestionType
+extension ValidationQuestionTypeExtension on ValidationQuestionType {
+  String getQuestionText() {
+    switch (this) {
+      // Preguntas sobre existencia de elementos de accesibilidad
+      case ValidationQuestionType.rampExists:
+        return '¿Existe una rampa en este lugar?';
+      case ValidationQuestionType.elevatorExists:
+        return '¿Existe un ascensor en este lugar?';
+      case ValidationQuestionType.accessibleBathroomExists:
+        return '¿Existe un baño accesible en este lugar?';
+      case ValidationQuestionType.brailleSignageExists:
+        return '¿Existe señalización en Braille en este lugar?';
+      case ValidationQuestionType.audioGuidanceExists:
+        return '¿Existe guía de audio en este lugar?';
+      case ValidationQuestionType.tactilePavementExists:
+        return '¿Existe pavimento táctil en este lugar?';
+    }
+  }
+}

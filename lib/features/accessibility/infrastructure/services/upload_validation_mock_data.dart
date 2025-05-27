@@ -31,20 +31,14 @@ class ValidationMockDataUploader {
       'marker_calle_principal',
       'marker_callejon',
       'marker_acuario',
-    ];
-
-    // Tipos de preguntas de validación
+    ];    // Tipos de preguntas de validación
     final questionTypes = [
       ValidationQuestionType.rampExists,
-      ValidationQuestionType.rampCondition,
-      ValidationQuestionType.rampWidth,
-      ValidationQuestionType.rampSlope,
-      ValidationQuestionType.rampHandrails,
-      ValidationQuestionType.rampLanding,
-      ValidationQuestionType.rampObstacles,
-      ValidationQuestionType.rampSurface,
-      ValidationQuestionType.rampVisibility,
-      ValidationQuestionType.rampMaintenance,
+      ValidationQuestionType.elevatorExists,
+      ValidationQuestionType.accessibleBathroomExists,
+      ValidationQuestionType.brailleSignageExists,
+      ValidationQuestionType.audioGuidanceExists,
+      ValidationQuestionType.tactilePavementExists,
     ];
 
     // Crear validaciones para cada marcador y tipo de pregunta

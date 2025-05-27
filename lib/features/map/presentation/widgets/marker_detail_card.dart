@@ -84,8 +84,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       },
     );
   }
-  
-  Future<void> _loadValidations() async {
+    Future<void> _loadValidations() async {
     try {
       final result = await _validationService.getValidationsForMarker(widget.marker.id);
       result.fold(
@@ -95,19 +94,19 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
           });
         },
         (error) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(error.toString())),
-            );
-          }
+          // Manejar error silenciosamente - no mostrar al usuario
+          print('Error loading validations: $error');
+          setState(() {
+            _validations = [];
+          });
         },
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+      // Manejar excepción silenciosamente - no mostrar al usuario
+      print('Exception loading validations: $e');
+      setState(() {
+        _validations = [];
+      });
     }
   }
     @override
@@ -397,9 +396,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                         }),
                       ],
                     ),
-                  ),
-
-                  // Sección de validación comunitaria
+                  ),                  // Sección de validación comunitaria
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Column(
@@ -416,54 +413,25 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                                 color: textColor,
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.verified,
-                                    size: 16,
-                                    color: Colors.green,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Verificado',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Icon(
+                              Icons.accessibility_new,
+                              color: isHighContrastMode 
+                                  ? AccessibilityProvider.kAccentColor 
+                                  : Colors.blue,
+                              size: 20,
                             ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        _buildValidationQuestion(
-                          question: '¿Existe una rampa en este lugar?',
-                          questionType: ValidationQuestionType.rampExists,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildValidationQuestion(
-                          question: '¿En qué estado se encuentra la rampa?',
-                          questionType: ValidationQuestionType.rampCondition,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildValidationQuestion(
-                          question: '¿La rampa tiene el ancho adecuado?',
-                          questionType: ValidationQuestionType.rampWidth,
-                        ),
-                        const SizedBox(height: 12),
-                        _buildValidationQuestion(
-                          question: '¿La pendiente de la rampa es adecuada?',
-                          questionType: ValidationQuestionType.rampSlope,
-                        ),
+                        
+                        // Mostrar todas las preguntas de existencia de elementos
+                        ...ValidationQuestionType.values.map((questionType) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _buildValidationQuestion(
+                            question: questionType.getQuestionText(),
+                            questionType: questionType,
+                          ),
+                        )),
                       ],
                     ),
                   ),
@@ -824,15 +792,14 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         ),
       ),
     );
-  }
-  Widget _buildValidationQuestion({
+  }  Widget _buildValidationQuestion({
     required String question,
     required ValidationQuestionType questionType,
   }) {
     final validation = _validations?.firstWhere(
       (v) => v.questionType == questionType,
       orElse: () => CommunityValidationModel(
-        id: questionType.toString(),
+        id: 'temp_${questionType.toString()}',
         markerId: widget.marker.id,
         questionType: questionType,
         positiveVotes: 0,
@@ -849,6 +816,9 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     final textColor = isHighContrastMode ? theme.colorScheme.onSurface : Colors.black87;
     final authService = GetIt.instance<AuthService>();
     final bool isAuthenticated = authService.currentUser != null;
+    
+    // Verificar si esta validación realmente existe
+    final validationExists = _validations?.any((v) => v.questionType == questionType) ?? false;
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -880,7 +850,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
               ),
             ],
           )
-        else          Padding(
+        else
+          Padding(
             padding: const EdgeInsets.symmetric(vertical: 8.0),
             child: Center(
               child: Row(
@@ -904,7 +875,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
               ),
             ),
           ),
-        const SizedBox(height: 8),        ClipRRect(
+        const SizedBox(height: 8),
+        ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: Container(
             height: 8,
@@ -918,8 +890,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                 // Barra de diferencia positiva (verde) o negativa (roja)
                 Builder(
                   builder: (context) {
-                    final positiveVotes = validation?.positiveVotes ?? 0;
-                    final negativeVotes = validation?.negativeVotes ?? 0;
+                    final positiveVotes = validationExists ? (validation?.positiveVotes ?? 0) : 0;
+                    final negativeVotes = validationExists ? (validation?.negativeVotes ?? 0) : 0;
                     final voteDifference = positiveVotes - negativeVotes;
                     final totalNeeded = validation?.totalVotesNeeded ?? 10;
                     
@@ -1002,6 +974,25 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         return;
       }
 
+      // Verificar si la validación existe, si no, crearla
+      final validationExists = _validations?.any((v) => v.questionType == questionType) ?? false;
+        if (!validationExists) {
+        // Crear la validación primero
+        final createResult = await _validationService.createValidation(widget.marker.id, questionType);
+        createResult.fold(
+          (newValidation) {
+            setState(() {
+              _validations = [...(_validations ?? []), newValidation];
+            });
+          },
+          (error) {
+            // Manejar error silenciosamente - no mostrar al usuario
+            print('Error creating validation: $error');
+            return;
+          },
+        );
+      }
+
       // Obtener puntos actuales del usuario antes de votar
       final userService = UserService();
       final userBefore = await userService.getUserById(currentUser.uid);
@@ -1051,22 +1042,15 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
                 duration: Duration(seconds: newBadge != null ? 5 : 3),
               ),
             );
-          }
-        },
+          }        },
         (failure) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(failure.toString())),
-            );
-          }
+          // Manejar error de voto silenciosamente - no mostrar al usuario
+          print('Vote failed: $failure');
         },
       );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+      // Manejar excepción silenciosamente - no mostrar al usuario
+      print('Exception in _handleVote: $e');
     }
   }
 }
