@@ -3,6 +3,7 @@ import '../domain/models/user.dart';
 import '../services/user_service.dart';
 import '../../auth/service/auth_service.dart';
 import 'widgets/badges_widget.dart';
+import '../../../widgets/loading_card.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
@@ -107,12 +108,15 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: LoadingCard(
+            message: 'Cargando perfil...',
+          ),
+        ),
       );
     }
 

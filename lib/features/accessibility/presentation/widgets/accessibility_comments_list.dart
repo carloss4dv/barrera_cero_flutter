@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../domain/accessibility_report_model.dart';
 import '../../../auth/service/auth_service.dart';
+import '../../../../widgets/loading_card.dart';
 
 class AccessibilityCommentsList extends StatelessWidget {
   final List<AccessibilityReportModel> reports;
@@ -14,12 +15,13 @@ class AccessibilityCommentsList extends StatelessWidget {
     this.isLoading = false,
     this.errorMessage,
   }) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: LoadingCard(
+          message: 'Cargando comentarios de accesibilidad...',
+        ),
       );
     }
 

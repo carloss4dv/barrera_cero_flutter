@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import '../../services/user_service.dart';
 import '../../../auth/service/auth_service.dart';
+import '../../../../widgets/loading_card.dart';
 
 class BPointsWidget extends StatefulWidget {
   final bool showCompact;
@@ -45,13 +46,12 @@ class _BPointsWidgetState extends State<BPointsWidget> {
       });
     }
   }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return widget.showCompact 
-        ? const SizedBox(width: 60, height: 24)
-        : const CircularProgressIndicator();
+        ? const LoadingIndicator(size: 16)
+        : const LoadingCard(message: 'Cargando puntos...');
     }
 
     if (widget.showCompact) {

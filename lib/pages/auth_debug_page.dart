@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../features/auth/service/auth_service.dart';
 import '../services/local_user_storage_service.dart';
+import '../widgets/loading_card.dart';
 
 class AuthDebugPage extends StatefulWidget {
   const AuthDebugPage({Key? key}) : super(key: key);
@@ -380,13 +381,8 @@ class _AuthDebugPageState extends State<AuthDebugPage> {
                             'Log de Diagnóstico',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          const Spacer(),
-                          if (_isRunning)
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
+                          const Spacer(),                          if (_isRunning)
+                            const LoadingIndicator(size: 16),
                         ],
                       ),
                     ),

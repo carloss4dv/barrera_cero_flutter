@@ -4,6 +4,7 @@ import '../../domain/i_forum_service.dart';
 import 'package:get_it/get_it.dart';
 import '../../../auth/service/auth_service.dart';
 import '../../../../services/local_user_storage_service.dart';
+import '../../../../widgets/loading_card.dart';
 
 class ForumScreen extends StatefulWidget {
   const ForumScreen({Key? key}) : super(key: key);
@@ -127,11 +128,14 @@ class _ForumScreenState extends State<ForumScreen> {
               ],
             ),
           ),
-          
-          // Lista de mensajes
+            // Lista de mensajes
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: LoadingCard(
+                      message: 'Cargando mensajes del foro...',
+                    ),
+                  )
                 : _errorMessage != null
                     ? Center(child: Text(_errorMessage!))
                     : ListView.builder(

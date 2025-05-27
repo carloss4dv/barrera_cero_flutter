@@ -19,6 +19,7 @@ import '../../../../main.dart';
 import '../../infrastructure/providers/navigation_state_provider.dart';
 import '../../infrastructure/services/run_upload_mock_data.dart';
 import '../../../auth/service/auth_service.dart';
+import '../../../../widgets/loading_card.dart';
 
 class MapPage extends StatelessWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -256,11 +257,7 @@ class _MapViewState extends State<MapView> {
                 ),
               ),
               
-              // Indicador de carga
-              if (state.isLoadingCurrentLocation || state.isLoadingNearbyMarkers)
-                const Center(
-                  child: CircularProgressIndicator(),
-                ),
+              // Indicador de carga              // Nota: Los indicadores de carga específicos están en los overlays posicionados
               
               // Mostrar detalle del marcador seleccionado
               if (state.hasSelectedMarker)
@@ -479,38 +476,44 @@ class _MapViewState extends State<MapView> {
                           ? AccessibilityProvider.kButtonColor 
                           : Colors.white,
                       child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                isHighContrastMode ? Colors.black : Colors.blue,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Generando ruta accesible...',
-                              style: TextStyle(
-                                color: isHighContrastMode ? Colors.black : Colors.black87,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Esto puede tardar unos segundos',
-                              style: TextStyle(
-                                color: isHighContrastMode ? Colors.black : Colors.black54,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
+                        padding: const EdgeInsets.all(20.0),                        child: LoadingCard(
+                          message: 'Generando ruta accesible...\nEsto puede tardar unos segundos',
                         ),
                       ),
+                    ),                  ),
+                ),
+                
+                // Overlay de carga para estados del mapa
+                if (state.isLoadingCurrentLocation)
+                  const Positioned(
+                    top: 100,
+                    left: 16,
+                    right: 16,
+                    child: LoadingCard(
+                      message: 'Obteniendo ubicación actual...',
                     ),
                   ),
-                ),            ],
+                
+                if (state.isLoadingNearbyMarkers)
+                  const Positioned(
+                    bottom: 200,
+                    left: 16,
+                    right: 16,
+                    child: LoadingCard(
+                      message: 'Cargando lugares cercanos...',
+                    ),
+                  ),
+                
+                if (state.isLoadingRoute)
+                  const Positioned(
+                    bottom: 120,
+                    left: 16,
+                    right: 16,
+                    child: LoadingCard(
+                      message: 'Calculando ruta...',
+                    ),
+                  ),
+            ],
           );
         },
         ),

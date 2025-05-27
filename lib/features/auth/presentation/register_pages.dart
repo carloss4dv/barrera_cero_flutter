@@ -3,7 +3,7 @@ import 'dart:ui';
 import '../service/auth_service.dart';
 import '../../users/services/user_service.dart';
 import '../../users/domain/models/user.dart';
-import '../../../services/local_user_storage_service.dart';
+import '../../../widgets/loading_card.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -212,27 +212,27 @@ class _RegisterPageState extends State<RegisterPage> {
                                     _errorMessage!,
                                     style: const TextStyle(color: Colors.red),
                                   ),
-                                ),
-                              const SizedBox(height: 20),
-                              SizedBox(
-                                width: double.infinity,
-                                height: 50,
-                                child: ElevatedButton(
-                                  onPressed: _isLoading ? null : _handleRegister,
-                                  style: ElevatedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    backgroundColor: Colors.black,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
+                                ),                              const SizedBox(height: 20),
+                              if (_isLoading)
+                                const LoadingCard(
+                                  message: 'Creando cuenta...',
+                                )
+                              else
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 50,
+                                  child: ElevatedButton(
+                                    onPressed: _handleRegister,
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: Colors.white,
+                                      backgroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                     ),
+                                    child: const Text('Registrarse'),
                                   ),
-                                  child: _isLoading
-                                      ? const CircularProgressIndicator(
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        )
-                                      : const Text('Registrarse'),
                                 ),
-                              ),
                               const SizedBox(height: 20),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
