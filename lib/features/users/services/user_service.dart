@@ -99,5 +99,77 @@ class UserService {
     return querySnapshot.docs
         .map((doc) => User.fromMap(doc.data()))
         .toList();
+  }  // Obtener el usuario actual (puede usar diferentes estrategias)
+  Future<User?> getCurrentUser() async {
+    try {
+      print('DEBUG: Obteniendo usuario actual...');
+      // Primero intentar obtener desde almacenamiento local
+      final localUserData = await localUserStorage.getUserData();
+      print('DEBUG: Datos locales obtenidos: $localUserData');
+      
+      if (localUserData != null && localUserData['id'] != null) {
+        print('DEBUG: Buscando usuario con ID: ${localUserData['id']}');
+        final user = await getUserById(localUserData['id']);
+        print('DEBUG: Usuario encontrado: ${user?.id}');
+        return user;
+      }
+      
+      // Si no hay ID en los datos locales, usar el UID directamente
+      if (localUserData != null && localUserData['uid'] != null) {
+        print('DEBUG: Intentando con UID: ${localUserData['uid']}');
+        // Crear un usuario temporal con los datos locales
+        final tempUser = User(
+          id: localUserData['uid'],
+          email: localUserData['email'] ?? '',
+          name: localUserData['name'] ?? 'Usuario',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        print('DEBUG: Usuario temporal creado: ${tempUser.id}');
+        return tempUser;
+      }
+      
+      print('DEBUG: No se encontraron datos locales de usuario');
+      return null;
+    } catch (e) {
+      print('Error al obtener usuario actual: $e');
+      return null;
+    }
+  }
+
+  // Agregar puntos B al usuario actual
+  Future<void> addBPoints(int points) async {
+    try {
+      final currentUser = await getCurrentUser();
+      if (currentUser == null) {
+        throw Exception('No se pudo obtener el usuario actual');
+      }
+
+      final userRef = _firestore.collection(_collection).doc(currentUser.id);
+      
+      await _firestore.runTransaction((transaction) async {
+        final userDoc = await transaction.get(userRef);
+        
+        if (!userDoc.exists) {
+          throw Exception('Usuario no encontrado');
+        }
+        
+        final user = User.fromMap(userDoc.data()!);
+        final newPoints = user.contributionPoints + points;
+        
+        transaction.update(userRef, {
+          'contributionPoints': newPoints,
+          'updatedAt': DateTime.now(),
+        });
+      });
+      
+      // Actualizar puntos en almacenamiento local
+      await localUserStorage.addContributionPoints(points);
+      
+      print('Se otorgaron $points B-points al usuario ${currentUser.id}');
+    } catch (e) {
+      print('Error al otorgar puntos: $e');
+      throw e;
+    }
   }
 }

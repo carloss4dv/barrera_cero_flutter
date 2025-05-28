@@ -45,6 +45,7 @@ class _MapViewState extends State<MapView> {
   final MapController _mapController = MapController();
   bool _isAuthenticated = false;
   String? _previousSelectedMarkerId;
+  NavigationStateProvider? _navigationProvider;
 
   @override
   void initState() {
@@ -57,6 +58,24 @@ class _MapViewState extends State<MapView> {
         _updateAuthState();
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Guardar referencia al NavigationStateProvider de forma segura
+    try {
+      _navigationProvider = context.read<NavigationStateProvider>();
+    } catch (e) {
+      debugPrint('Error al obtener NavigationStateProvider: $e');
+      _navigationProvider = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _navigationProvider = null;
+    super.dispose();
   }
     void _updateAuthState() {
     setState(() {
@@ -144,16 +163,23 @@ class _MapViewState extends State<MapView> {
     
     // Mover el mapa al centro calculado con el zoom apropiado
     _mapController.move(center, zoom);
-  }
-  @override
+  }  @override
   Widget build(BuildContext context) {
     final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isHighContrastMode = accessibilityProvider.highContrastMode;      return Scaffold(
-      body: BlocListener<MarkerCubit, MarkerState>(
+    final isHighContrastMode = accessibilityProvider.highContrastMode;
+
+    return Scaffold(      body: BlocListener<MarkerCubit, MarkerState>(
         listener: (context, state) {
           // Update navigation state when marker detail visibility changes
-          final navigationProvider = context.read<NavigationStateProvider>();
-          navigationProvider.setMarkerDetailVisible(state.hasSelectedMarker);
+          // Solo actualizar si el widget aún está montado y tenemos la referencia
+          if (mounted && _navigationProvider != null) {
+            try {
+              _navigationProvider!.setMarkerDetailVisible(state.hasSelectedMarker);
+            } catch (e) {
+              // Ignorar errores si el provider ya no es válido
+              debugPrint('Error al actualizar NavigationStateProvider: $e');
+            }
+          }
         },
         child: BlocBuilder<MarkerCubit, MarkerState>(
         builder: (context, state) {

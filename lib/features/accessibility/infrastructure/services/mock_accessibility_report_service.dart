@@ -1,12 +1,11 @@
 import 'package:result_dart/result_dart.dart';
 import '../../domain/accessibility_report_model.dart';
 import '../../domain/i_accessibility_report_service.dart';
-import 'dart:math';
+import '../../../../services/local_user_storage_service.dart';
 
 class MockAccessibilityReportService implements IAccessibilityReportService {
   final Map<String, List<AccessibilityReportModel>> _markerReports = {};
   int _lastReportId = 0;
-  final Random _random = Random();
   
   // Mapa de userIds a nombres para mantener consistencia
   final Map<String, String> _userNames = {
@@ -39,37 +38,7 @@ class MockAccessibilityReportService implements IAccessibilityReportService {
       userName: _userNames[userId] ?? 'Usuario',
       comments: comments,
       level: level,
-    );
-  }
-
-  String _getRandomComment(AccessibilityLevel level) {
-    final comments = {
-      AccessibilityLevel.good: [
-        'Excelente accesibilidad, todo está perfectamente adaptado',
-        'Muy buena accesibilidad, no encontré ningún problema',
-        'Totalmente accesible para personas con movilidad reducida',
-        'Las instalaciones están muy bien adaptadas',
-        'No hay barreras arquitectónicas',
-      ],
-      AccessibilityLevel.medium: [
-        'Accesibilidad aceptable, pero hay algunas mejoras posibles',
-        'Algunas áreas son accesibles, otras no tanto',
-        'Hay rampas pero podrían estar mejor mantenidas',
-        'La accesibilidad es regular, hay que mejorar algunos aspectos',
-        'Algunos obstáculos en el camino',
-      ],
-      AccessibilityLevel.bad: [
-        'Muy mala accesibilidad, casi imposible moverse',
-        'No hay adaptaciones para personas con movilidad reducida',
-        'Muchas barreras arquitectónicas',
-        'Imposible acceder con silla de ruedas',
-        'Necesita mejoras urgentes en accesibilidad',
-      ],
-    };
-    
-    final levelComments = comments[level]!;
-    return levelComments[_random.nextInt(levelComments.length)];
-  }
+    );  }
   
   void _initMockData() {
     // Marcadores de Zaragoza
@@ -327,8 +296,7 @@ class MockAccessibilityReportService implements IAccessibilityReportService {
 
   @override
   Future<ResultDart<List<AccessibilityReportModel>, AccessibilityReportException>> getReportsForMarker(
-      String markerId) async {
-    try {
+      String markerId) async {    try {
       if (!_markerReports.containsKey(markerId)) {
         return Success([]);
       }
@@ -339,5 +307,78 @@ class MockAccessibilityReportService implements IAccessibilityReportService {
         AccessibilityReportException('Error al obtener reportes: ${e.toString()}'),
       );
     }
+  }  @override
+    Future<List<AccessibilityReportModel>> getAllReports() async {
+    // Primero agregar reportes del usuario actual si están autenticados
+    await _addCurrentUserReports();
+    
+    final allReports = <AccessibilityReportModel>[];
+    for (final reports in _markerReports.values) {
+      allReports.addAll(reports);
+    }
+
+    print('=== DEBUG: MockAccessibilityReportService - Total reportes: ${allReports.length} ===');
+    print('=== DEBUG: MockAccessibilityReportService - Usuarios en reportes: ===');
+    final userIds = allReports.map((r) => r.userId).toSet();
+    for (final userId in userIds) {
+      final userReportsCount = allReports.where((r) => r.userId == userId).length;
+      print('=== DEBUG: Usuario $userId tiene $userReportsCount reportes ===');
+    }
+    
+    return allReports;
+  }  /// Agregar algunos reportes del usuario actual si está autenticado
+  Future<void> _addCurrentUserReports() async {
+    try {
+      final localStorage = LocalUserStorageService();
+      await localStorage.init();
+      final currentUserId = await localStorage.getUserId();
+      
+      print('=== DEBUG: _addCurrentUserReports - currentUserId: $currentUserId ===');
+      
+      if (currentUserId != null) {
+        print('=== DEBUG: Agregando reportes para usuario actual: $currentUserId ===');
+        
+        // Verificar si ya tiene reportes
+        bool hasReports = false;
+        for (final reports in _markerReports.values) {
+          if (reports.any((r) => r.userId == currentUserId)) {
+            hasReports = true;
+            break;
+          }
+        }        
+        print('=== DEBUG: ¿Usuario ya tiene reportes? $hasReports ===');
+        
+        if (!hasReports) {
+          // Agregar 4 reportes del usuario actual en diferentes marcadores
+          _addCurrentUserReportToMarker('marker_plaza_pilar', currentUserId, 'Muy buena accesibilidad según mi experiencia', AccessibilityLevel.good);
+          _addCurrentUserReportToMarker('marker_mercado_central', currentUserId, 'Regular, algunas barreras pero se puede acceder', AccessibilityLevel.medium);
+          _addCurrentUserReportToMarker('marker_parque_grande', currentUserId, 'Excelente para personas con movilidad reducida', AccessibilityLevel.good);
+          _addCurrentUserReportToMarker('marker_aljaferia', currentUserId, 'Acceso limitado en algunas áreas históricas', AccessibilityLevel.medium);
+          
+          print('=== DEBUG: Agregados 4 reportes del usuario actual ===');
+        } else {
+          print('=== DEBUG: El usuario ya tiene reportes, no se agregan más ===');
+        }      } else {
+        print('=== DEBUG: No hay usuario actual autenticado ===');
+      }
+    } catch (e) {
+      print('=== DEBUG: Error agregando reportes del usuario actual: $e ===');
+    }
+  }
+  
+  void _addCurrentUserReportToMarker(String markerId, String userId, String comment, AccessibilityLevel level) {
+    if (!_markerReports.containsKey(markerId)) {
+      _markerReports[markerId] = [];
+    }
+    
+    final report = AccessibilityReportModel(
+      id: _generateId(),
+      userId: userId,
+      userName: 'Mi Usuario', // Nombre genérico para el usuario actual
+      comments: comment,
+      level: level,
+    );
+    
+    _markerReports[markerId]!.add(report);
   }
 }

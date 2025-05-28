@@ -188,18 +188,74 @@ class LocalUserStorageService {
       return 'Usuario';
     }
   }
-
   /// Limpiar todos los datos del usuario
   Future<bool> clearUserData() async {
     await init();
     try {
+      print('🔄 Iniciando limpieza completa de datos del usuario...');
+      
+      // Limpiar claves principales de datos del usuario
       await _prefs!.remove(_userDataKey);
       await _prefs!.remove(_userPreferencesKey);
-      print('🗑️ Datos locales del usuario eliminados');
+      print('✅ Datos principales del usuario eliminados');
+      
+      // Limpiar datos específicos adicionales del usuario
+      await _clearUserSpecificCache();
+      
+      print('🗑️ Limpieza completa de datos locales del usuario finalizada');
       return true;
     } catch (e) {
       print('❌ Error limpiando datos del usuario: $e');
       return false;
+    }
+  }
+
+  /// Limpia datos específicos del usuario que podrían quedar en SharedPreferences
+  Future<void> _clearUserSpecificCache() async {
+    try {
+      if (_prefs != null) {
+        final keys = _prefs!.getKeys().toList();
+        
+        // Obtener el UID del usuario actual si está disponible
+        final userData = await getUserData();
+        final currentUserId = userData?['uid'] as String?;
+        
+        // Lista de patrones de claves que deben ser limpiadas
+        final userDataPatterns = [
+          'user_validation_',
+          'accessibility_validation_',
+          'user_cache_',
+          'user_settings_',
+          'user_notifications_',
+          'user_temp_',
+          'last_sync_',
+          'user_session_',
+          'user_activity_',
+        ];
+        
+        for (final key in keys) {
+          bool shouldDelete = false;
+          
+          // Verificar patrones generales
+          shouldDelete = userDataPatterns.any((pattern) => 
+            key.startsWith(pattern) || key.contains(pattern)
+          );
+          
+          // Si tenemos el UID del usuario, también limpiar datos específicos de ese usuario
+          if (currentUserId != null && key.contains(currentUserId)) {
+            shouldDelete = true;
+          }
+          
+          if (shouldDelete) {
+            await _prefs!.remove(key);
+            print('🗑️ Clave específica eliminada: $key');
+          }
+        }
+        
+        print('✅ Limpieza de datos específicos del usuario completada');
+      }
+    } catch (e) {
+      print('❌ Error limpiando datos específicos del usuario: $e');
     }
   }
 

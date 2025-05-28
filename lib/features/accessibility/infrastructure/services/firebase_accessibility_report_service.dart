@@ -235,4 +235,26 @@ class FirebaseAccessibilityReportService implements IAccessibilityReportService 
         return AccessibilityLevel.medium;
     }
   }
+
+  @override
+  Future<List<AccessibilityReportModel>> getAllReports() async {
+    try {
+      final snapshot = await _firestore
+          .collectionGroup('accessibility_reports')
+          .orderBy('created_at', descending: true)
+          .get();
+
+      final reports = snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id; // Asegurar que el ID del documento se incluya
+        final dto = AccessibilityReportDto.fromJson(data);
+        return dto.toDomain();
+      }).toList();
+
+      return reports;
+    } catch (e) {
+      print('Error al obtener todos los reportes: $e');
+      return [];
+    }
+  }
 }

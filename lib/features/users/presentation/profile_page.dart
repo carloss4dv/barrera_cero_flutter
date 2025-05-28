@@ -91,19 +91,62 @@ class _ProfilePageState extends State<ProfilePage> {
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-
-  Future<void> _handleLogout() async {
+  }  Future<void> _handleLogout() async {
     try {
-      await authService.signOut();
+      print('🔄 Iniciando logout desde ProfilePage...');
+      
+      // Mostrar indicador de carga
       if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const AlertDialog(
+            content: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Cerrando sesión...'),
+              ],
+            ),
+          ),
+        );
+      }
+      
+      // Realizar logout completo usando AuthService
+      await authService.signOut();
+      print('✅ Logout completo realizado desde ProfilePage');
+      
+      if (mounted) {
+        // Cerrar el diálogo de carga
+        Navigator.of(context).pop();
+        
         // Navegar al mapa después de cerrar sesión en lugar de al login
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+        
+        // Mostrar confirmación
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Sesión cerrada correctamente'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
+      print('❌ Error durante logout desde ProfilePage: $e');
+      
       if (mounted) {
+        // Cerrar el diálogo de carga si está abierto
+        Navigator.of(context).pop();
+        
+        // Mostrar error
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al cerrar sesión')),
+          SnackBar(
+            content: Text('Error al cerrar sesión: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
         );
       }
     }

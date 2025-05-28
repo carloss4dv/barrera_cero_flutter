@@ -14,6 +14,7 @@ import 'features/map/infrastructure/providers/navigation_state_provider.dart';
 import 'features/map/infrastructure/providers/navigation_observer.dart';
 import 'features/forum/presentation/screens/forum_screen.dart';
 import 'features/forum/di/forum_module.dart';
+import 'features/challenges/di/challenge_module.dart';
 import 'features/notifications/infrastructure/services/firebase_messaging_service.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -27,14 +28,29 @@ const String kHighContrastMapUrl = 'https://cartodb-basemaps-a.global.ssl.fastly
 final getIt = GetIt.instance;
 
 void setupDependencies() {
+  print('=== DEBUG: setupDependencies() INICIANDO ===');
+  
   // Registrar dependencias por características
+  print('=== DEBUG: Registrando dependencias del mapa ===');
   registerMapDependencies(getIt);
+  
+  print('=== DEBUG: Registrando dependencias de accesibilidad ===');
   configureAccessibilityDependencies(); // Registrar servicios de accesibilidad
+  
+  print('=== DEBUG: Registrando AuthService ===');
   getIt.registerSingleton<AuthService>(authService); // Use the global singleton instance directly
+  
+  print('=== DEBUG: Registrando dependencias del foro ===');
   ForumModule.init(); // Registrar dependencias del foro
   
+  print('=== DEBUG: Registrando dependencias de desafíos ===');
+  ChallengeModule.init(); // Registrar dependencias de desafíos
+  
+  print('=== DEBUG: Registrando servicio de notificaciones ===');
   // Registrar el servicio de notificaciones
   getIt.registerSingleton<FirebaseMessagingService>(FirebaseMessagingService());
+  
+  print('=== DEBUG: setupDependencies() COMPLETADO ===');
 }
 
 void main() async {

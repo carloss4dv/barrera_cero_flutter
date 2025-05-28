@@ -1069,10 +1069,9 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       level: level,
     );
       final result = await _reportService.addReport(widget.marker.id, report);
-      result.fold(
-      (success) async {
-        // Limpiar cache de conteo de reportes para forzar actualización
-        await ReportChallengeService.clearCacheForCurrentUser();
+      result.fold(      (success) async {
+        // Actualizar cache de conteo de reportes de forma inteligente
+        await ReportChallengeService.smartUpdateCacheForCurrentUser();
         
         // Recargar los reportes
         _loadReports();
@@ -1146,17 +1145,17 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     
     print('Enviando actualización con ID: ${updatedReport.id}');
       final result = await _reportService.updateReport(widget.marker.id, updatedReport);
-      result.fold(
-      (success) async {
+      result.fold(      (success) async {
         print('Reporte actualizado exitosamente');
         
-        // Limpiar cache de conteo de reportes para forzar actualización
+        // Para actualizaciones no necesitamos cambiar el cache ya que no cambia el conteo
+        // Pero limpiamos el cache para asegurar consistencia de datos
         await ReportChallengeService.clearCacheForCurrentUser();
         
         // Recargar los reportes
         _loadReports();
         
-        // Verificar y otorgar desafíos completados
+        // Verificar y otorgar desafíos completados (por si había cambios en el progreso)
         await _checkAndAwardChallenges();
         
         // Mostrar confirmación

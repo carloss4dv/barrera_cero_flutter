@@ -2,9 +2,9 @@ import "package:firebase_auth/firebase_auth.dart";
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Fixed import
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../users/services/user_service.dart';
 import '../../../services/local_user_storage_service.dart';
+import '../../../services/logout_cleanup_service.dart';
 
 class AuthService extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -64,17 +64,41 @@ class AuthService extends ChangeNotifier {
 
   Future<void> signOut() async {
     try {
+      print('🔄 Iniciando proceso de logout completo...');
+      
+      // Obtener el UID del usuario actual antes de cerrar sesión
+      final currentUserId = currentUser?.uid;
+      
+      // 1. Cerrar sesión de Firebase
       await _auth.signOut();
+      print('✅ Sesión Firebase cerrada');
+      
+      // 2. Realizar limpieza completa usando el servicio centralizado
+      await LogoutCleanupService.performCompleteCleanup(userId: currentUserId);
+      
+      // 3. Limpieza adicional de SharedPreferences básico (por seguridad)
       if (_prefs != null) {
         await _prefs!.remove(_userKey);
+        print('✅ Limpieza adicional de datos básicos completada');
       }
-      await localUserStorage.clearUserData();
+      
+      // 4. Verificar que la limpieza fue exitosa
+      final cleanupSuccess = await LogoutCleanupService.verifyCleanupSuccess(currentUserId);
+      if (cleanupSuccess) {
+        print('✅ Verificación de limpieza exitosa');
+      } else {
+        print('⚠️ Advertencia: Algunos datos pueden no haberse limpiado completamente');
+      }
+      
+      print('🎉 Logout completo finalizado exitosamente');
       notifyListeners();
     } catch (e) {
-      print('Error during sign out: $e');
+      print('❌ Error durante el logout: $e');
       rethrow;
     }
   }
+
+
 
   Future<bool> checkSession() async {
     if (_prefs == null) return false;

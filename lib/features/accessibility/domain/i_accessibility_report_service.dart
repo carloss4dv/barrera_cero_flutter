@@ -26,4 +26,7 @@ abstract class IAccessibilityReportService {
   
   /// Obtiene el conteo de reportes por nivel para un marcador
   Future<ResultDart<Map<AccessibilityLevel, int>, AccessibilityReportException>> getReportCountByLevel(String markerId);
+  
+  /// Obtiene todos los reportes de todos los marcadores
+  Future<List<AccessibilityReportModel>> getAllReports();
 }
