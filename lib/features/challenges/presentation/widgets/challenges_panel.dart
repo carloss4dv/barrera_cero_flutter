@@ -3,6 +3,7 @@ import 'package:get_it/get_it.dart';
 import '../../domain/challenge_model.dart';
 import '../../infrastructure/services/mock_challenge_service.dart';
 import 'challenge_card.dart';
+import 'distance_tracking_control.dart';
 
 class ChallengesPanel extends StatefulWidget {
   final bool isExpanded;
@@ -276,13 +277,18 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
                                         ),
                                       ],
                                     ),
-                                  )
-                                : ListView.builder(
+                                  )                                : ListView.builder(
                                     controller: scrollController,
                                     padding: const EdgeInsets.symmetric(vertical: 8),
-                                    itemCount: _challenges.length,
+                                    itemCount: _challenges.length + 1, // +1 para el control de tracking
                                     itemBuilder: (context, index) {
-                                      final challenge = _challenges[index];
+                                      // Mostrar el control de tracking de distancia como el primer elemento
+                                      if (index == 0) {
+                                        return const DistanceTrackingControl();
+                                      }
+                                      
+                                      // Mostrar los desafíos (ajustando el índice)
+                                      final challenge = _challenges[index - 1];
                                       return ChallengeCard(challenge: challenge);
                                     },
                                   ),

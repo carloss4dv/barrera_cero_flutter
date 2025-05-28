@@ -4,6 +4,7 @@ enum ChallengeType {
   reports,
   walking,
   visits,
+  distance,
 }
 
 class Challenge {
