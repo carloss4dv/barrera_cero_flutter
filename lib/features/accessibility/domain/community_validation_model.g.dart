@@ -38,18 +38,11 @@ Map<String, dynamic> _$CommunityValidationModelToJson(
 
 const _$ValidationQuestionTypeEnumMap = {
   ValidationQuestionType.rampExists: 'ramp_exists',
-  ValidationQuestionType.rampCondition: 'ramp_condition',
-  ValidationQuestionType.rampWidth: 'ramp_width',
-  ValidationQuestionType.rampSlope: 'ramp_slope',
-  ValidationQuestionType.rampHandrails: 'ramp_handrails',
-  ValidationQuestionType.rampLanding: 'ramp_landing',
-  ValidationQuestionType.rampObstacles: 'ramp_obstacles',
-  ValidationQuestionType.rampSurface: 'ramp_surface',
-  ValidationQuestionType.rampVisibility: 'ramp_visibility',
-  ValidationQuestionType.rampMaintenance: 'ramp_maintenance',
-  ValidationQuestionType.stairsExist: 'stairs_exist',
-  ValidationQuestionType.slope: 'slope',
-  ValidationQuestionType.surfaceType: 'surface_type',
+  ValidationQuestionType.elevatorExists: 'elevator_exists',
+  ValidationQuestionType.accessibleBathroomExists: 'accessible_bathroom_exists',
+  ValidationQuestionType.brailleSignageExists: 'braille_signage_exists',
+  ValidationQuestionType.audioGuidanceExists: 'audio_guidance_exists',
+  ValidationQuestionType.tactilePavementExists: 'tactile_pavement_exists',
 };
 
 const _$ValidationStatusEnumMap = {

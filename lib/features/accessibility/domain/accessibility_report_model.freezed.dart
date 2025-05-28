@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$AccessibilityReportModel {
 
- String get id; String get userId; String get comments; AccessibilityLevel get level;
+ String get id; String get userId; String get userName; String get comments; AccessibilityLevel get level;
 /// Create a copy of AccessibilityReportModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $AccessibilityReportModelCopyWith<AccessibilityReportModel> get copyWith => _$Ac
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccessibilityReportModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.comments, comments) || other.comments == comments)&&(identical(other.level, level) || other.level == level));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AccessibilityReportModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.comments, comments) || other.comments == comments)&&(identical(other.level, level) || other.level == level));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,comments,level);
+int get hashCode => Object.hash(runtimeType,id,userId,userName,comments,level);
 
 @override
 String toString() {
-  return 'AccessibilityReportModel(id: $id, userId: $userId, comments: $comments, level: $level)';
+  return 'AccessibilityReportModel(id: $id, userId: $userId, userName: $userName, comments: $comments, level: $level)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $AccessibilityReportModelCopyWith<$Res>  {
   factory $AccessibilityReportModelCopyWith(AccessibilityReportModel value, $Res Function(AccessibilityReportModel) _then) = _$AccessibilityReportModelCopyWithImpl;
 @useResult
 $Res call({
- String id, String userId, String comments, AccessibilityLevel level
+ String id, String userId, String userName, String comments, AccessibilityLevel level
 });
 
 
@@ -63,10 +63,11 @@ class _$AccessibilityReportModelCopyWithImpl<$Res>
 
 /// Create a copy of AccessibilityReportModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? comments = null,Object? level = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = null,Object? userName = null,Object? comments = null,Object? level = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
 as String,comments: null == comments ? _self.comments : comments // ignore: cast_nullable_to_non_nullable
 as String,level: null == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
 as AccessibilityLevel,
@@ -80,11 +81,12 @@ as AccessibilityLevel,
 
 
 class _AccessibilityReportModel implements AccessibilityReportModel {
-  const _AccessibilityReportModel({required this.id, required this.userId, required this.comments, required this.level});
+  const _AccessibilityReportModel({required this.id, required this.userId, required this.userName, required this.comments, required this.level});
   
 
 @override final  String id;
 @override final  String userId;
+@override final  String userName;
 @override final  String comments;
 @override final  AccessibilityLevel level;
 
@@ -98,16 +100,16 @@ _$AccessibilityReportModelCopyWith<_AccessibilityReportModel> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccessibilityReportModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.comments, comments) || other.comments == comments)&&(identical(other.level, level) || other.level == level));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AccessibilityReportModel&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.userName, userName) || other.userName == userName)&&(identical(other.comments, comments) || other.comments == comments)&&(identical(other.level, level) || other.level == level));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,comments,level);
+int get hashCode => Object.hash(runtimeType,id,userId,userName,comments,level);
 
 @override
 String toString() {
-  return 'AccessibilityReportModel(id: $id, userId: $userId, comments: $comments, level: $level)';
+  return 'AccessibilityReportModel(id: $id, userId: $userId, userName: $userName, comments: $comments, level: $level)';
 }
 
 
@@ -118,7 +120,7 @@ abstract mixin class _$AccessibilityReportModelCopyWith<$Res> implements $Access
   factory _$AccessibilityReportModelCopyWith(_AccessibilityReportModel value, $Res Function(_AccessibilityReportModel) _then) = __$AccessibilityReportModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String userId, String comments, AccessibilityLevel level
+ String id, String userId, String userName, String comments, AccessibilityLevel level
 });
 
 
@@ -135,10 +137,11 @@ class __$AccessibilityReportModelCopyWithImpl<$Res>
 
 /// Create a copy of AccessibilityReportModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? comments = null,Object? level = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = null,Object? userName = null,Object? comments = null,Object? level = null,}) {
   return _then(_AccessibilityReportModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,userName: null == userName ? _self.userName : userName // ignore: cast_nullable_to_non_nullable
 as String,comments: null == comments ? _self.comments : comments // ignore: cast_nullable_to_non_nullable
 as String,level: null == level ? _self.level : level // ignore: cast_nullable_to_non_nullable
 as AccessibilityLevel,

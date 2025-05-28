@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/local_user_storage_service.dart';
+import 'loading_card.dart';
 
 /// Widget que muestra información del usuario desde el almacenamiento local
 /// Demuestra cómo acceder a los datos guardados como "localhost" en Flutter
@@ -39,15 +40,11 @@ class _LocalUserInfoWidgetState extends State<LocalUserInfoWidget> {
       setState(() => _isLoading = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Center(child: CircularProgressIndicator()),
-        ),
+      return const LoadingCard(
+        message: 'Cargando información del usuario...',
       );
     }
 
