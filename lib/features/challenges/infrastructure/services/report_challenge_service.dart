@@ -12,8 +12,8 @@ class ReportChallengeService {
   Function(Challenge challenge, int pointsAwarded)? onChallengeCompleted;
 
   ReportChallengeService(this._userService)
-      : _firestore = FirebaseFirestore.instance;/// Obtiene el número de reportes hechos por el usuario actual
-  /// Realiza una consulta a Firebase directamente y guarda en SharedPreferences
+      : _firestore = FirebaseFirestore.instance;  /// Obtiene el número de reportes hechos por el usuario actual
+  /// Usa caché inteligente: busca en DB al iniciar sesión, luego usa caché
   Future<int> getUserReportCount() async {
     try {
       // Obtener el UID del usuario autenticado
@@ -28,17 +28,28 @@ class ReportChallengeService {
 
       print('=== DEBUG: Consultando reportes para usuario UID: $currentUserId ===');
       
-      // Primero intentar cargar desde SharedPreferences (cache)
-      final cachedCount = await _getCachedReportCount(currentUserId);
-      if (cachedCount != null) {
-        print('=== DEBUG: Usando conteo cacheado: $cachedCount ===');
-        // Actualizar en background y devolver el valor cacheado
-        _updateReportCountFromFirebase(currentUserId);
-        return cachedCount;
-      }
+      // Verificar si es la primera consulta de la sesión
+      final isFirstSessionQuery = await _isFirstSessionQuery(currentUserId);
       
-      // Si no hay cache, consultar Firebase directamente
-      return await _updateReportCountFromFirebase(currentUserId);
+      if (isFirstSessionQuery) {
+        print('=== DEBUG: Primera consulta de la sesión - Consultando base de datos ===');
+        // Primera consulta de la sesión: ir directamente a Firebase
+        final count = await _updateReportCountFromFirebase(currentUserId);
+        await _markSessionAsInitialized(currentUserId);
+        return count;
+      } else {
+        print('=== DEBUG: Sesión ya inicializada - Usando caché ===');
+        // Sesión ya inicializada: usar caché
+        final cachedCount = await _getCachedReportCount(currentUserId);
+        if (cachedCount != null) {
+          print('=== DEBUG: Usando conteo cacheado: $cachedCount ===');
+          return cachedCount;
+        } else {
+          // Si por alguna razón no hay caché, consultar Firebase
+          print('=== DEBUG: No hay caché disponible - Consultando Firebase ===');
+          return await _updateReportCountFromFirebase(currentUserId);
+        }
+      }
       
     } catch (e) {
       print('ERROR: Error obteniendo conteo de reportes del usuario: $e');
@@ -105,7 +116,6 @@ class ReportChallengeService {
       return null;
     }
   }
-
   /// Guarda el conteo en SharedPreferences
   Future<void> _cacheReportCount(String userId, int count) async {
     try {
@@ -119,6 +129,29 @@ class ReportChallengeService {
       print('=== DEBUG: Conteo guardado en cache: $count ===');
     } catch (e) {
       print('ERROR: Error guardando en cache: $e');
+    }
+  }
+  /// Verifica si es la primera consulta de la sesión
+  Future<bool> _isFirstSessionQuery(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final sessionKey = 'session_initialized_$userId';
+      return !(prefs.getBool(sessionKey) ?? false);
+    } catch (e) {
+      print('ERROR: Error verificando inicialización de sesión: $e');
+      return true; // En caso de error, asumir que es primera consulta
+    }
+  }
+
+  /// Marca la sesión como inicializada
+  Future<void> _markSessionAsInitialized(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final sessionKey = 'session_initialized_$userId';
+      await prefs.setBool(sessionKey, true);
+      print('=== DEBUG: Sesión marcada como inicializada para usuario $userId ===');
+    } catch (e) {
+      print('ERROR: Error marcando sesión como inicializada: $e');
     }
   }
   /// Limpia el cache cuando se agrega un nuevo reporte
@@ -180,6 +213,72 @@ class ReportChallengeService {
       }
     } catch (e) {
       print('ERROR: Error limpiando cache del usuario actual: $e');
+    }
+  }
+  /// Actualiza inteligentemente el cache para el usuario actual
+  static Future<void> smartUpdateCacheForCurrentUser() async {
+    try {
+      final localUserStorage = LocalUserStorageService();
+      await localUserStorage.init();
+      final currentUserId = await localUserStorage.getUserId();
+      
+      if (currentUserId != null) {
+        print('=== DEBUG: Actualizando cache inteligentemente para usuario: $currentUserId ===');
+        
+        // Al crear un nuevo reporte, incrementar el cache en lugar de limpiarlo
+        final prefs = await SharedPreferences.getInstance();
+        final key = 'user_report_count_$currentUserId';
+        final currentCachedCount = prefs.getInt(key) ?? 0;
+        
+        // Incrementar el contador en 1 (porque se acaba de agregar un reporte)
+        final newCount = currentCachedCount + 1;
+        
+        // Actualizar el cache con el nuevo valor
+        await prefs.setInt(key, newCount);
+        await prefs.setInt('user_report_count_timestamp_$currentUserId', DateTime.now().millisecondsSinceEpoch);
+        
+        print('=== DEBUG: Cache actualizado: $currentCachedCount -> $newCount ===');
+      }
+    } catch (e) {
+      print('ERROR: Error en actualización inteligente de cache: $e');
+    }
+  }
+  /// Limpia todos los datos del usuario en logout
+  static Future<void> clearAllUserDataOnLogout() async {
+    try {
+      print('🔄 Limpiando todos los datos de challenges y reportes en logout...');
+      
+      final localUserStorage = LocalUserStorageService();
+      await localUserStorage.init();
+      final currentUserId = await localUserStorage.getUserId();
+      
+      if (currentUserId != null) {
+        final prefs = await SharedPreferences.getInstance();
+        
+        // Limpiar cache de reportes
+        final reportCountKey = 'user_report_count_$currentUserId';
+        final timestampKey = 'user_report_count_timestamp_$currentUserId';
+        await prefs.remove(reportCountKey);
+        await prefs.remove(timestampKey);
+        
+        // Limpiar marca de sesión inicializada
+        final sessionKey = 'session_initialized_$currentUserId';
+        await prefs.remove(sessionKey);
+        
+        // Limpiar estado de challenges completados
+        final keys = prefs.getKeys();
+        final challengeKeys = keys.where((key) => 
+          key.startsWith('challenge_completed_') && key.endsWith('_$currentUserId')
+        ).toList();
+        
+        for (final key in challengeKeys) {
+          await prefs.remove(key);
+        }
+        
+        print('✅ Todos los datos de challenges y reportes limpiados para usuario: $currentUserId');
+      }
+    } catch (e) {
+      print('❌ Error limpiando datos de challenges en logout: $e');
     }
   }
 
