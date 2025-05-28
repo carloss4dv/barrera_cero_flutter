@@ -13,16 +13,17 @@ class MockChallengeService {
     _reportChallengeService.onChallengeCompleted = (challenge, points) {
       onChallengeCompleted?.call(challenge, points);
     };
-  }/// Obtiene todos los desafíos de reportes con progreso actualizado
-  Future<List<Challenge>> getChallenges() async {
-    print('=== DEBUG: MockChallengeService.getChallenges() - INICIANDO ===');
+  }  /// Obtiene todos los desafíos de reportes con progreso actualizado
+  /// Si [justCreatedReport] es true, indica que se acaba de crear un nuevo reporte
+  Future<List<Challenge>> getChallenges({bool justCreatedReport = false}) async {
+    print('=== DEBUG: MockChallengeService.getChallenges() - INICIANDO, justCreatedReport: $justCreatedReport ===');
     
     final challenges = _getBaseChallenges();
     final updatedChallenges = <Challenge>[];
 
     for (final challenge in challenges) {
       print('=== DEBUG: Actualizando progreso para desafío: ${challenge.title} ===');
-      final updatedChallenge = await _reportChallengeService.updateChallengeProgress(challenge);
+      final updatedChallenge = await _reportChallengeService.updateChallengeProgress(challenge, justCreatedReport: justCreatedReport);
       print('=== DEBUG: Desafío actualizado - Progreso: ${updatedChallenge.currentProgress}/${updatedChallenge.target} ===');
       updatedChallenges.add(updatedChallenge);
     }
@@ -30,20 +31,24 @@ class MockChallengeService {
     print('=== DEBUG: MockChallengeService.getChallenges() - COMPLETADO, retornando ${updatedChallenges.length} desafíos ===');
     return updatedChallenges;
   }
-
   /// Verifica y otorga puntos si algún desafío acaba de ser completado
-  Future<List<Challenge>> checkAndAwardCompletedChallenges() async {
+  /// Si [justCreatedReport] es true, indica que se acaba de crear un nuevo reporte
+  Future<List<Challenge>> checkAndAwardCompletedChallenges({bool justCreatedReport = false}) async {
+    print('=== DEBUG: MockChallengeService.checkAndAwardCompletedChallenges() - justCreatedReport: $justCreatedReport ===');
+    
     final challenges = _getBaseChallenges();
     final completedChallenges = <Challenge>[];
 
     for (final challenge in challenges) {
-      final wasJustCompleted = await _reportChallengeService.wasJustCompleted(challenge);
-      if (wasJustCompleted) {
-        await _reportChallengeService.awardChallengePoints(challenge);
-        completedChallenges.add(challenge);
+      final updatedChallenge = await _reportChallengeService.updateChallengeProgress(challenge, justCreatedReport: justCreatedReport);
+      
+      // Verificar si se completó con este nuevo reporte
+      if (updatedChallenge.isCompleted && justCreatedReport) {
+        completedChallenges.add(updatedChallenge);
       }
     }
 
+    print('=== DEBUG: MockChallengeService.checkAndAwardCompletedChallenges() - ${completedChallenges.length} desafíos completados ===');
     return completedChallenges;
   }
 

@@ -149,13 +149,13 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     _overlayEntry?.remove();
     super.dispose();
   }
-
   /// Verifica si algún desafío ha sido completado y otorga puntos B-points
-  Future<void> _checkAndAwardChallenges() async {
+  /// Si [justCreatedReport] es true, indica que se acaba de crear un nuevo reporte
+  Future<void> _checkAndAwardChallenges({bool justCreatedReport = false}) async {
     if (_challengeService == null) return;
     
     try {
-      final completedChallenges = await _challengeService!.checkAndAwardCompletedChallenges();
+      final completedChallenges = await _challengeService!.checkAndAwardCompletedChallenges(justCreatedReport: justCreatedReport);
       
       if (completedChallenges.isNotEmpty) {
         for (final challenge in completedChallenges) {
@@ -1075,9 +1075,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         
         // Recargar los reportes
         _loadReports();
-        
-        // Verificar y otorgar desafíos completados
-        await _checkAndAwardChallenges();
+          // Verificar y otorgar desafíos completados (indica que se creó un nuevo reporte)
+        await _checkAndAwardChallenges(justCreatedReport: true);
         
         // Mostrar confirmación
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1154,9 +1153,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         
         // Recargar los reportes
         _loadReports();
-        
-        // Verificar y otorgar desafíos completados (por si había cambios en el progreso)
-        await _checkAndAwardChallenges();
+          // Verificar y otorgar desafíos completados (por si había cambios en el progreso)
+        await _checkAndAwardChallenges(justCreatedReport: false);
         
         // Mostrar confirmación
         ScaffoldMessenger.of(context).showSnackBar(

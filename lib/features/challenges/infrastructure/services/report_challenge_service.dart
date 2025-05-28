@@ -279,8 +279,9 @@ class ReportChallengeService {
     final reportCount = await getUserReportCount();
     return reportCount >= challenge.target;
   }  /// Actualiza el progreso de un desafío de reportes
-  Future<Challenge> updateChallengeProgress(Challenge challenge) async {
-    print('=== DEBUG: ReportChallengeService.updateChallengeProgress() - INICIANDO para: ${challenge.title} ===');
+  /// Si [justCreatedReport] es true, indica que se acaba de crear un nuevo reporte
+  Future<Challenge> updateChallengeProgress(Challenge challenge, {bool justCreatedReport = false}) async {
+    print('=== DEBUG: ReportChallengeService.updateChallengeProgress() - INICIANDO para: ${challenge.title}, justCreatedReport: $justCreatedReport ===');
     
     if (challenge.type != ChallengeType.reports) {
       print('=== DEBUG: El desafío no es de tipo reportes, retornando sin cambios ===');
@@ -304,9 +305,12 @@ class ReportChallengeService {
     // Verificar si ya había sido completado antes
     final wasAlreadyCompleted = await _wasAlreadyCompleted(challenge.id, currentUserId);
     
-    print('=== DEBUG: Reportes del usuario: $reportCount, Target: ${challenge.target}, Completado: $isCompleted, Ya completado antes: $wasAlreadyCompleted ===');    // Si el desafío se completa por primera vez, otorgar puntos
-    if (isCompleted && !wasAlreadyCompleted) {
-      print('=== DEBUG: ¡Desafío completado por primera vez! Otorgando ${challenge.points} B-points ===');
+    print('=== DEBUG: Reportes del usuario: $reportCount, Target: ${challenge.target}, Completado: $isCompleted, Ya completado antes: $wasAlreadyCompleted ===');
+    
+    // Solo otorgar puntos si se acaba de crear un reporte Y se completa por primera vez
+    // Esto evita que se otorguen puntos al iniciar sesión con desafíos ya completados
+    if (isCompleted && !wasAlreadyCompleted && justCreatedReport) {
+      print('=== DEBUG: ¡Desafío completado con nuevo reporte! Otorgando ${challenge.points} B-points ===');
       try {
         await _userService.addBPoints(challenge.points);
         await _markChallengeAsCompleted(challenge.id, currentUserId);
@@ -317,6 +321,15 @@ class ReportChallengeService {
         
       } catch (e) {
         print('=== ERROR: Error otorgando B-points: $e ===');
+      }
+    } else if (isCompleted && !wasAlreadyCompleted && !justCreatedReport) {
+      // Solo marcar como completado pero no otorgar puntos si ya estaba completado al iniciar sesión
+      print('=== DEBUG: Desafío ya estaba completado al iniciar sesión - Solo marcando como completado sin otorgar puntos ===');
+      try {
+        await _markChallengeAsCompleted(challenge.id, currentUserId);
+        print('=== DEBUG: Desafío marcado como completado (sin puntos por login) ===');
+      } catch (e) {
+        print('=== ERROR: Error marcando desafío como completado: $e ===');
       }
     }
 
