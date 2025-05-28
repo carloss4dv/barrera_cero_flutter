@@ -62,25 +62,15 @@ class ReportChallengeService {
     try {
       int totalReports = 0;
       
-      // Consultar la colección 'places' para encontrar todos los reportes del usuario
-      final placesSnapshot = await _firestore.collection('places').get();
-      
-      print('=== DEBUG: Consultando ${placesSnapshot.docs.length} lugares ===');
-      
-      for (final placeDoc in placesSnapshot.docs) {
-        final reportsSnapshot = await placeDoc.reference
-            .collection('accessibility_reports')
-            .where('user_id', isEqualTo: userId)
-            .get();
-        
-        if (reportsSnapshot.docs.isNotEmpty) {
-          totalReports += reportsSnapshot.docs.length;
-          print('=== DEBUG: Encontrados ${reportsSnapshot.docs.length} reportes en ${placeDoc.id} ===');
-        }
-      }
-      
+      // Consulta global a todos los subcollections 'accessibility_reports' bajo 'places'
+      final reportsSnapshot = await _firestore
+        .collectionGroup('accessibility_reports')
+        .where('user_id', isEqualTo: userId)
+        .get();
+
+      totalReports = reportsSnapshot.docs.length;
       print('=== DEBUG: Total de reportes encontrados para $userId: $totalReports ===');
-      
+            
       // Guardar en SharedPreferences
       await _cacheReportCount(userId, totalReports);
       
