@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../domain/challenge_model.dart';
 import '../../infrastructure/services/mock_challenge_service.dart';
 import 'challenge_card.dart';
+import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 
 class ChallengesPanel extends StatefulWidget {
   final bool isExpanded;
@@ -17,132 +19,174 @@ class ChallengesPanel extends StatefulWidget {
   State<ChallengesPanel> createState() => _ChallengesPanelState();
 }
 
-class _ChallengesPanelState extends State<ChallengesPanel> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
+class _ChallengesPanelState extends State<ChallengesPanel> {
+  final DraggableScrollableController _scrollController = DraggableScrollableController();
   final MockChallengeService _challengeService = MockChallengeService();
-  late List<Challenge> _challenges;
+  List<Challenge> _challenges = [];
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
-    _challenges = _challengeService.getMockChallenges();
-  }
-
-  @override
-  void didUpdateWidget(ChallengesPanel oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isExpanded != oldWidget.isExpanded) {
-      if (widget.isExpanded) {
-        _controller.forward();
-      } else {
-        _controller.reverse();
-      }
-    }
+    _loadChallenges();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _loadChallenges() {
+    setState(() {
+      _challenges = _challengeService.getMockChallenges();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        final screenHeight = MediaQuery.of(context).size.height;
-        final panelHeight = screenHeight * 0.7; // Panel takes 70% of screen height
-        
-        return Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: _animation.value * panelHeight,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(20),
-                topRight: Radius.circular(20),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildHandle(),
-                _buildHeader(),
-                Expanded(
-                  child: _buildChallengesList(),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+    if (!widget.isExpanded) {
+      return const SizedBox.shrink();
+    }
 
-  Widget _buildHandle() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12.0),
-      child: Center(
+    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
+    final isHighContrastMode = accessibilityProvider.highContrastMode;
+    final theme = Theme.of(context);
+    
+    // Colores adaptados para alto contraste
+    final backgroundColor = isHighContrastMode 
+        ? theme.colorScheme.surface
+        : Colors.white;
+    final textColor = isHighContrastMode 
+        ? theme.colorScheme.onSurface
+        : Colors.black87;
+    final accentColor = isHighContrastMode 
+        ? AccessibilityProvider.kAccentColor
+        : Colors.blue;
+
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: widget.onClose,
         child: Container(
-          width: 40,
-          height: 5,
-          decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(10),
+          color: Colors.black54,
+          child: DraggableScrollableSheet(
+            controller: _scrollController,
+            initialChildSize: 0.4,
+            minChildSize: 0.2,
+            maxChildSize: 0.9,
+            builder: (context, scrollController) {
+              return GestureDetector(
+                onTap: () {}, // Evita que el tap cierre el panel
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                    border: isHighContrastMode 
+                        ? Border.all(color: AccessibilityProvider.kAccentColor, width: 2)
+                        : null,
+                  ),
+                  child: Column(
+                    children: [
+                      // Handle indicator
+                      Container(
+                        margin: const EdgeInsets.only(top: 12),
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: textColor.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+
+                      // Header con título y botón de cerrar
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: backgroundColor,
+                          border: isHighContrastMode 
+                              ? Border(bottom: BorderSide(color: AccessibilityProvider.kAccentColor))
+                              : Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.emoji_events,
+                              color: accentColor,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Desafíos',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: textColor,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: widget.onClose,
+                              icon: Icon(
+                                Icons.close,
+                                color: textColor,
+                                size: 24,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Lista de desafíos
+                      Expanded(
+                        child: _challenges.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.emoji_events_outlined,
+                                      size: 64,
+                                      color: textColor.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No hay desafíos disponibles',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: textColor.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: scrollController,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                itemCount: _challenges.length,
+                                itemBuilder: (context, index) {
+                                  final challenge = _challenges[index];
+                                  return ChallengeCard(challenge: challenge);
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Desafíos Completados',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: widget.onClose,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChallengesList() {
-    return ListView.builder(
-      padding: const EdgeInsets.only(bottom: 16),
-      itemCount: _challenges.length,
-      itemBuilder: (context, index) {
-        return ChallengeCard(challenge: _challenges[index]);
-      },
     );
   }
 }
