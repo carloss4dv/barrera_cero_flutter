@@ -16,6 +16,9 @@ import '../../../users/presentation/widgets/b_points_widget.dart';
 import '../../../users/domain/models/badge_system.dart';
 import '../../../users/presentation/widgets/badges_widget.dart';
 import '../../../users/services/user_service.dart';
+import '../../../challenges/domain/challenge_model.dart';
+import '../../../challenges/infrastructure/services/mock_challenge_service.dart';
+import '../../../challenges/infrastructure/services/report_challenge_service.dart';
 import '../../../../services/local_user_storage_service.dart';
 
 class MarkerDetailCard extends StatefulWidget {
@@ -41,16 +44,20 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
   List<AccessibilityReportModel>? _reports;
   List<CommunityValidationModel>? _validations;
   String? _errorMessage;
-  late IAccessibilityReportService _reportService;  late ICommunityValidationService _validationService;
+  late IAccessibilityReportService _reportService;
+  late ICommunityValidationService _validationService;
+  MockChallengeService? _challengeService;
   
   // Para mostrar animación de B-points
   OverlayEntry? _overlayEntry;
-  
-  @override
+    @override
   void initState() {
-    super.initState();
-    _reportService = GetIt.instance<IAccessibilityReportService>();
+    super.initState();    _reportService = GetIt.instance<IAccessibilityReportService>();
     _validationService = GetIt.instance<ICommunityValidationService>();
+    
+    // Inicializar el servicio de desafíos usando GetIt
+    _challengeService = GetIt.instance<MockChallengeService>();
+    
     _loadData();
   }
   
@@ -136,11 +143,107 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       });
     }
   }
-    @override
+  @override
   void dispose() {
     _scrollController.dispose();
     _overlayEntry?.remove();
     super.dispose();
+  }
+
+  /// Verifica si algún desafío ha sido completado y otorga puntos B-points
+  Future<void> _checkAndAwardChallenges() async {
+    if (_challengeService == null) return;
+    
+    try {
+      final completedChallenges = await _challengeService!.checkAndAwardCompletedChallenges();
+      
+      if (completedChallenges.isNotEmpty) {
+        for (final challenge in completedChallenges) {
+          // Mostrar notificación de desafío completado
+          _showChallengeCompletedDialog(challenge);
+        }
+      }
+    } catch (e) {
+      print('Error verificando desafíos: $e');
+    }
+  }
+
+  /// Muestra un diálogo cuando se completa un desafío
+  void _showChallengeCompletedDialog(Challenge challenge) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.emoji_events,
+              color: Colors.amber,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            const Text('¡Desafío Completado!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              challenge.icon,
+              color: Colors.blue,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              challenge.title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              challenge.description,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.green),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.stars,
+                    color: Colors.green,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '¡Has ganado ${challenge.points} B-Points!',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('¡Genial!'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _toggleExpand() {
@@ -965,13 +1068,18 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       comments: comment,
       level: level,
     );
-    
-    final result = await _reportService.addReport(widget.marker.id, report);
-    
-    result.fold(
-      (success) {
+      final result = await _reportService.addReport(widget.marker.id, report);
+      result.fold(
+      (success) async {
+        // Limpiar cache de conteo de reportes para forzar actualización
+        await ReportChallengeService.clearCacheForCurrentUser();
+        
         // Recargar los reportes
         _loadReports();
+        
+        // Verificar y otorgar desafíos completados
+        await _checkAndAwardChallenges();
+        
         // Mostrar confirmación
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -979,7 +1087,7 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
             backgroundColor: Colors.green,
           ),
         );
-      },      (error) {
+      },(error) {
         // Verificar si el error es porque ya existe un reporte
         if (error.message.contains('ya tiene un reporte')) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1037,14 +1145,20 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
     );
     
     print('Enviando actualización con ID: ${updatedReport.id}');
-    
-    final result = await _reportService.updateReport(widget.marker.id, updatedReport);
-    
-    result.fold(
-      (success) {
+      final result = await _reportService.updateReport(widget.marker.id, updatedReport);
+      result.fold(
+      (success) async {
         print('Reporte actualizado exitosamente');
+        
+        // Limpiar cache de conteo de reportes para forzar actualización
+        await ReportChallengeService.clearCacheForCurrentUser();
+        
         // Recargar los reportes
         _loadReports();
+        
+        // Verificar y otorgar desafíos completados
+        await _checkAndAwardChallenges();
+        
         // Mostrar confirmación
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

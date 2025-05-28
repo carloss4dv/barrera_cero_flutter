@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:get_it/get_it.dart';
 import '../../domain/challenge_model.dart';
 import '../../infrastructure/services/mock_challenge_service.dart';
 import 'challenge_card.dart';
-import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 
 class ChallengesPanel extends StatefulWidget {
   final bool isExpanded;
@@ -21,47 +20,147 @@ class ChallengesPanel extends StatefulWidget {
 
 class _ChallengesPanelState extends State<ChallengesPanel> {
   final DraggableScrollableController _scrollController = DraggableScrollableController();
-  final MockChallengeService _challengeService = MockChallengeService();
+  MockChallengeService? _challengeService;
   List<Challenge> _challenges = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadChallenges();
+    _initializeService();
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }  void _initializeService() {
+    print('=== DEBUG: ChallengesPanel._initializeService() INICIANDO ===');
+    // Obtener los servicios de GetIt
+    try {
+      print('=== DEBUG: Obteniendo MockChallengeService de GetIt ===');
+      _challengeService = GetIt.instance<MockChallengeService>();
+      print('=== DEBUG: MockChallengeService obtenido correctamente ===');
+      
+      // Configurar callback para notificaciones de desafíos completados
+      _challengeService!.onChallengeCompleted = (challenge, pointsAwarded) {
+        if (mounted) {
+          _showChallengeCompletedNotification(challenge, pointsAwarded);
+        }
+      };
+      
+      _loadChallenges();
+    } catch (e) {
+      print('=== ERROR: No se pudo obtener MockChallengeService: $e ===');
+      // Si no se pueden obtener los servicios, mostrar lista vacía
+      setState(() {
+        _challenges = [];
+        _isLoading = false;
+      });
+    }
   }
 
-  void _loadChallenges() {
-    setState(() {
-      _challenges = _challengeService.getMockChallenges();
-    });
+  /// Mostrar notificación cuando se completa un desafío
+  void _showChallengeCompletedNotification(Challenge challenge, int pointsAwarded) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.white,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '¡Desafío completado!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    '${challenge.title} - +$pointsAwarded B-points',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.stars,
+              color: Colors.amber,
+              size: 24,
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: 'Ver',
+          textColor: Colors.white,
+          onPressed: () {
+            // Opcional: Scroll hasta el desafío completado
+            _loadChallenges(); // Recargar para mostrar el estado actualizado
+          },
+        ),
+      ),
+    );
+  }Future<void> _loadChallenges() async {
+    print('=== DEBUG: ChallengesPanel._loadChallenges() - INICIANDO ===');
+    
+    if (_challengeService == null) {
+      print('=== ERROR: ChallengesPanel - _challengeService es null, saliendo ===');
+      return;
+    }
+    
+    try {
+      print('=== DEBUG: ChallengesPanel - Llamando a _challengeService.getChallenges() ===');
+      final challenges = await _challengeService!.getChallenges();
+      if (mounted) {
+        setState(() {
+          _challenges = challenges;
+          _isLoading = false;
+        });
+        
+        // Debug de los desafíos cargados
+        print('=== DEBUG: ChallengesPanel - Desafíos cargados: ${challenges.length} ===');
+        for (final challenge in challenges) {
+          print('=== DEBUG: Desafío: ${challenge.title} - Progreso: ${challenge.currentProgress}/${challenge.target} - Completado: ${challenge.isCompleted} ===');
+        }
+      }
+    } catch (e) {
+      print('=== ERROR: ChallengesPanel - Error cargando desafíos: $e ===');
+      if (mounted) {
+        setState(() {
+          _challenges = [];
+          _isLoading = false;
+        });
+      }
+    }
   }
 
+  /// Método público para recargar los desafíos desde fuera del widget
+  Future<void> refreshChallenges() async {
+    print('DEBUG: ChallengesPanel - Refrescando desafíos...');
+    await _loadChallenges();
+  }
   @override
   Widget build(BuildContext context) {
     if (!widget.isExpanded) {
       return const SizedBox.shrink();
     }
 
-    final accessibilityProvider = Provider.of<AccessibilityProvider>(context);
-    final isHighContrastMode = accessibilityProvider.highContrastMode;
     final theme = Theme.of(context);
     
-    // Colores adaptados para alto contraste
-    final backgroundColor = isHighContrastMode 
-        ? theme.colorScheme.surface
-        : Colors.white;
-    final textColor = isHighContrastMode 
-        ? theme.colorScheme.onSurface
-        : Colors.black87;
-    final accentColor = isHighContrastMode 
-        ? AccessibilityProvider.kAccentColor
-        : Colors.blue;
+    // Colores usando el tema de Material Design
+    final backgroundColor = theme.colorScheme.surface;
+    final textColor = theme.colorScheme.onSurface;
+    final accentColor = theme.colorScheme.primary;
 
     return Positioned.fill(
       child: GestureDetector(
@@ -82,17 +181,13 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
-                    ),
-                    boxShadow: [
+                    ),                    boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),
                     ],
-                    border: isHighContrastMode 
-                        ? Border.all(color: AccessibilityProvider.kAccentColor, width: 2)
-                        : null,
                   ),
                   child: Column(
                     children: [
@@ -105,16 +200,12 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
                           color: textColor.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
-                      ),
-
-                      // Header con título y botón de cerrar
+                      ),                      // Header con título y botón de cerrar
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         decoration: BoxDecoration(
                           color: backgroundColor,
-                          border: isHighContrastMode 
-                              ? Border(bottom: BorderSide(color: AccessibilityProvider.kAccentColor))
-                              : Border(bottom: BorderSide(color: Colors.grey.shade200)),
+                          border: Border(bottom: BorderSide(color: theme.dividerColor)),
                         ),
                         child: Row(
                           children: [
@@ -144,23 +235,19 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
                             ),
                           ],
                         ),
-                      ),
-
-                      // Lista de desafíos
+                      ),                      // Lista de desafíos
                       Expanded(
-                        child: _challenges.isEmpty
+                        child: _isLoading
                             ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.emoji_events_outlined,
-                                      size: 64,
-                                      color: textColor.withOpacity(0.5),
+                                    CircularProgressIndicator(
+                                      color: accentColor,
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
-                                      'No hay desafíos disponibles',
+                                      'Cargando desafíos...',
                                       style: TextStyle(
                                         fontSize: 16,
                                         color: textColor.withOpacity(0.7),
@@ -169,15 +256,36 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
                                   ],
                                 ),
                               )
-                            : ListView.builder(
-                                controller: scrollController,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                itemCount: _challenges.length,
-                                itemBuilder: (context, index) {
-                                  final challenge = _challenges[index];
-                                  return ChallengeCard(challenge: challenge);
-                                },
-                              ),
+                            : _challenges.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.emoji_events_outlined,
+                                          size: 64,
+                                          color: textColor.withOpacity(0.5),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'No hay desafíos disponibles',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: textColor.withOpacity(0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    controller: scrollController,
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    itemCount: _challenges.length,
+                                    itemBuilder: (context, index) {
+                                      final challenge = _challenges[index];
+                                      return ChallengeCard(challenge: challenge);
+                                    },
+                                  ),
                       ),
                     ],
                   ),
