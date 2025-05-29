@@ -127,7 +127,7 @@ class MockChallengeService {
         title: 'Primer kilometro',
         description: 'Recorre 1 kilómetro caminando',
         icon: Icons.directions_walk,
-        points: 50,
+        points: 100, // Modificado: 100 B-points
         type: ChallengeType.distance,
         target: 1000, // 1 km en metros
         isCompleted: false,
@@ -135,9 +135,9 @@ class MockChallengeService {
       Challenge(
         id: '7',
         title: 'Caminante dedicado',
-        description: 'Recorre 10 kilómetros caminando',
+        description: 'Recorre 10 kilómetros caminando', // Asumo que este es el siguiente desafío de distancia
         icon: Icons.hiking,
-        points: 200,
+        points: 500, // Modificado: 500 B-points
         type: ChallengeType.distance,
         target: 10000, // 10 km en metros
         isCompleted: false,
@@ -145,9 +145,9 @@ class MockChallengeService {
       Challenge(
         id: '8',
         title: 'Explorador incansable',
-        description: 'Recorre 100 kilómetros caminando',
+        description: 'Recorre 100 kilómetros caminando', // Asumo que este es el subsiguiente desafío de distancia
         icon: Icons.explore,
-        points: 1000,
+        points: 1000, // Modificado: 1000 B-points
         type: ChallengeType.distance,
         target: 100000, // 100 km en metros
         isCompleted: false,

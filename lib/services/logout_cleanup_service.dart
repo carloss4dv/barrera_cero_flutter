@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'local_user_storage_service.dart';
 import '../features/challenges/infrastructure/services/report_challenge_service.dart';
+import '../features/challenges/infrastructure/services/distance_challenge_service.dart';
 
 /// Servicio centralizado para la limpieza completa de datos durante el logout
 /// Asegura que todos los datos del usuario sean eliminados correctamente
@@ -47,7 +48,6 @@ class LogoutCleanupService {
       print('❌ Error limpiando datos básicos: $e');
     }
   }
-
   /// Limpia datos específicos de challenges y reportes
   static Future<void> _clearChallengeData(String? userId) async {
     try {
@@ -55,6 +55,9 @@ class LogoutCleanupService {
       
       // Usar el método estático del ReportChallengeService
       await ReportChallengeService.clearAllUserDataOnLogout();
+      
+      // Limpiar datos de desafíos de distancia
+      await DistanceChallengeService.clearAllUserDataOnLogout();
       
       print('✅ Datos de challenges y reportes limpiados');
     } catch (e) {

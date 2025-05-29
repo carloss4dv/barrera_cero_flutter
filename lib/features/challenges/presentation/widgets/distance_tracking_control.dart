@@ -110,19 +110,27 @@ class _DistanceTrackingControlState extends State<DistanceTrackingControl> {
         actions: [
           TextButton(
             onPressed: () async {
-              await _distanceService.addTestDistance(500); // 500 metros
+              await _distanceService.addTestKm(0.5); // 0.5 km
               Navigator.of(context).pop();
-              _showSnackBar('500m agregados para testing', Icons.add);
+              _showSnackBar('0.5 km agregados para testing', Icons.add);
             },
-            child: const Text('+ 500m'),
+            child: const Text('+ 0.5 km'),
           ),
           TextButton(
             onPressed: () async {
-              await _distanceService.addTestDistance(1000); // 1 km
+              await _distanceService.addTestKm(1); // 1 km
               Navigator.of(context).pop();
               _showSnackBar('1 km agregado para testing', Icons.add);
             },
-            child: const Text('+ 1km'),
+            child: const Text('+ 1 km'),
+          ),
+          TextButton(
+            onPressed: () async {
+              await _distanceService.addTestKm(5); // 5 km
+              Navigator.of(context).pop();
+              _showSnackBar('5 km agregados para testing', Icons.add);
+            },
+            child: const Text('+ 5 km'),
           ),
           TextButton(
             onPressed: () async {

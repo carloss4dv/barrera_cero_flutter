@@ -14,7 +14,7 @@ import 'features/map/infrastructure/providers/navigation_state_provider.dart';
 import 'features/map/infrastructure/providers/navigation_observer.dart';
 import 'features/forum/presentation/screens/forum_screen.dart';
 import 'features/forum/di/forum_module.dart';
-import 'features/challenges/di/challenge_module.dart';
+import 'features/challenges/infrastructure/dependency_injection/challenge_module.dart';
 import 'features/notifications/infrastructure/services/firebase_messaging_service.dart';
 
 import 'package:firebase_core/firebase_core.dart';

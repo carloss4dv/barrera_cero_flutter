@@ -18,6 +18,9 @@ class DistanceTrackingService {
   final StreamController<double> _distanceController = StreamController<double>.broadcast();
   final StreamController<bool> _trackingStateController = StreamController<bool>.broadcast();
 
+  // Callback para notificar cambios de distancia a otros servicios
+  Function(double newDistance)? onDistanceUpdated;
+
   // Getters para los streams
   Stream<double> get distanceStream => _distanceController.stream;
   Stream<bool> get trackingStateStream => _trackingStateController.stream;
@@ -107,6 +110,7 @@ class DistanceTrackingService {
         _totalDistance += distance;
         _saveDistanceToPreferences(_totalDistance);
         _distanceController.add(_totalDistance);
+        onDistanceUpdated?.call(_totalDistance);
         
         print('=== DEBUG: Nueva distancia: ${distance.toStringAsFixed(2)}m, Total: ${_totalDistance.toStringAsFixed(2)}m ===');
       }
@@ -223,13 +227,18 @@ class DistanceTrackingService {
     await _saveDistanceToPreferences(_totalDistance);
     _distanceController.add(_totalDistance);
   }
-
-  /// Simula distancia adicional (para testing/debug)
-  Future<void> addTestDistance(double meters) async {
-    print('=== DEBUG: Agregando distancia de prueba: $meters metros ===');
+  /// Simula distancia adicional en kilómetros (para testing/debug)
+  Future<void> addTestKm(double km) async {
+    final meters = km * 1000; // Convertir km a metros
+    print('=== DEBUG: Agregando distancia de prueba: $km km ($meters metros) ===');
     _totalDistance += meters;
     await _saveDistanceToPreferences(_totalDistance);
     _distanceController.add(_totalDistance);
+    
+    // Notificar a otros servicios sobre el cambio de distancia
+    onDistanceUpdated?.call(_totalDistance);
+    
+    print('=== DEBUG: Distancia total después de agregar: ${_totalDistance.toStringAsFixed(2)}m ===');
   }
 
   /// Obtiene la distancia en kilómetros
