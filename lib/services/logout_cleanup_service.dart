@@ -20,11 +20,13 @@ class LogoutCleanupService {
       
       // 2. Limpiar caché específico de challenges y reportes
       await _clearChallengeData(userId);
-      
-      // 3. Limpiar datos de validaciones y otros cachés
+        // 3. Limpiar datos de validaciones y otros cachés
       await _clearValidationAndCacheData(userId);
       
-      // 4. Limpiar datos específicos de la aplicación
+      // 4. Limpiar notificaciones de logros/challenges
+      await _clearChallengeNotifications(userId);
+      
+      // 5. Limpiar datos específicos de la aplicación
       await _clearApplicationSpecificData(userId);
       
       // 5. Limpieza final de cualquier dato residual
@@ -100,6 +102,40 @@ class LogoutCleanupService {
       print('✅ Datos de validaciones y cachés limpiados');
     } catch (e) {
       print('❌ Error limpiando validaciones y cachés: $e');
+    }
+  }
+
+  /// Limpia todas las notificaciones de challenges/logros mostradas
+  static Future<void> _clearChallengeNotifications(String? userId) async {
+    try {
+      print('🔄 Limpiando notificaciones de challenges/logros...');
+      
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys().toList();
+      
+      // Limpiar todas las claves de notificaciones de challenges
+      int removedCount = 0;
+      for (final key in keys) {
+        if (key.startsWith('notification_shown_')) {
+          // Si tenemos userId específico, solo limpiar las de ese usuario
+          if (userId != null) {
+            if (key.endsWith('_$userId')) {
+              await prefs.remove(key);
+              removedCount++;
+              print('🗑️ Notificación eliminada: $key');
+            }
+          } else {
+            // Si no hay userId específico, limpiar todas las notificaciones
+            await prefs.remove(key);
+            removedCount++;
+            print('🗑️ Notificación eliminada: $key');
+          }
+        }
+      }
+      
+      print('✅ Notificaciones de challenges limpiadas: $removedCount eliminadas');
+    } catch (e) {
+      print('❌ Error limpiando notificaciones de challenges: $e');
     }
   }
 

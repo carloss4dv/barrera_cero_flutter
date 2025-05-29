@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/challenge_model.dart';
 import '../../infrastructure/services/mock_challenge_service.dart';
+import '../../../../services/local_user_storage_service.dart';
 import 'challenge_card.dart';
 import 'distance_tracking_control.dart';
 
@@ -35,7 +37,9 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }  void _initializeService() {
+  }
+
+  void _initializeService() {
     print('=== DEBUG: ChallengesPanel._initializeService() INICIANDO ===');
     // Obtener los servicios de GetIt
     try {
@@ -46,7 +50,7 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
       // Configurar callback para notificaciones de desafíos completados
       _challengeService!.onChallengeCompleted = (challenge, pointsAwarded) {
         if (mounted) {
-          _showChallengeCompletedNotification(challenge, pointsAwarded);
+          _showChallengeCompletedNotificationOnce(challenge, pointsAwarded);
         }
       };
       
@@ -61,7 +65,69 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
     }
   }
 
-  /// Mostrar notificación cuando se completa un desafío
+  /// Verificar si una notificación ya fue mostrada
+  Future<bool> _wasNotificationAlreadyShown(String challengeId, String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'notification_shown_${challengeId}_$userId';
+      return prefs.getBool(key) ?? false;
+    } catch (e) {
+      print('ERROR: Error verificando notificación: $e');
+      return false;
+    }
+  }
+
+  /// Marcar una notificación como mostrada
+  Future<void> _markNotificationAsShown(String challengeId, String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'notification_shown_${challengeId}_$userId';
+      await prefs.setBool(key, true);
+      print('=== DEBUG: Notificación marcada como mostrada para desafío $challengeId del usuario $userId ===');
+    } catch (e) {
+      print('ERROR: Error marcando notificación como mostrada: $e');
+    }
+  }
+
+  /// Mostrar notificación cuando se completa un desafío SOLO UNA VEZ
+  Future<void> _showChallengeCompletedNotificationOnce(Challenge challenge, int pointsAwarded) async {
+    print('=== DEBUG: _showChallengeCompletedNotificationOnce() - Verificando si mostrar notificación para: ${challenge.title} ===');
+    
+    try {
+      // Obtener el ID del usuario actual
+      final localUserStorage = LocalUserStorageService();
+      await localUserStorage.init();
+      final currentUserId = await localUserStorage.getUserId();
+      
+      if (currentUserId == null) {
+        print('=== DEBUG: No se pudo obtener el UID del usuario, no se mostrará notificación ===');
+        return;
+      }
+      
+      // Verificar si ya se mostró esta notificación
+      final alreadyShown = await _wasNotificationAlreadyShown(challenge.id, currentUserId);
+      
+      if (alreadyShown) {
+        print('=== DEBUG: Notificación para desafío ${challenge.title} ya fue mostrada antes, omitiendo ===');
+        return;
+      }
+      
+      print('=== DEBUG: Mostrando notificación por primera vez para desafío: ${challenge.title} ===');
+      
+      // Mostrar la notificación
+      _showChallengeCompletedNotification(challenge, pointsAwarded);
+      
+      // Marcar como mostrada
+      await _markNotificationAsShown(challenge.id, currentUserId);
+      
+    } catch (e) {
+      print('=== ERROR: Error en _showChallengeCompletedNotificationOnce: $e ===');
+      // En caso de error, mostrar la notificación por seguridad (mejor mostrar de más que de menos)
+      _showChallengeCompletedNotification(challenge, pointsAwarded);
+    }
+  }
+
+  /// Mostrar notificación cuando se completa un desafío (método original)
   void _showChallengeCompletedNotification(Challenge challenge, int pointsAwarded) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -111,7 +177,8 @@ class _ChallengesPanelState extends State<ChallengesPanel> {
         ),
       ),
     );
-  }Future<void> _loadChallenges() async {
+  }
+  Future<void> _loadChallenges() async {
     print('=== DEBUG: ChallengesPanel._loadChallenges() - INICIANDO ===');
     
     if (_challengeService == null) {

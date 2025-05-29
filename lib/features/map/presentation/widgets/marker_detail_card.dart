@@ -2,8 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:provider/provider.dart';
-import '../../../../features/accessibility/domain/accessibility_report_model.dart';
-import '../../../../features/accessibility/presentation/widgets/accessibility_comments_list.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../accessibility/domain/accessibility_report_model.dart';
+import '../../../accessibility/presentation/widgets/accessibility_comments_list.dart';
 import '../../../accessibility/domain/i_accessibility_report_service.dart';
 import '../../../accessibility/presentation/providers/accessibility_provider.dart';
 import '../../domain/marker_model.dart';
@@ -142,14 +143,74 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
         _validations = [];
       });
     }
-  }
-  @override
+  }  @override
   void dispose() {
     _scrollController.dispose();
     _overlayEntry?.remove();
     super.dispose();
   }
-  /// Verifica si algún desafío ha sido completado y otorga puntos B-points
+
+  /// Verificar si una notificación ya fue mostrada
+  Future<bool> _wasNotificationAlreadyShown(String challengeId, String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'notification_shown_${challengeId}_$userId';
+      return prefs.getBool(key) ?? false;
+    } catch (e) {
+      print('ERROR: Error verificando notificación: $e');
+      return false;
+    }
+  }
+
+  /// Marcar una notificación como mostrada
+  Future<void> _markNotificationAsShown(String challengeId, String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'notification_shown_${challengeId}_$userId';
+      await prefs.setBool(key, true);
+      print('=== DEBUG: Notificación marcada como mostrada para desafío $challengeId del usuario $userId ===');
+    } catch (e) {
+      print('ERROR: Error marcando notificación como mostrada: $e');
+    }
+  }
+
+  /// Mostrar diálogo de desafío completado SOLO UNA VEZ
+  Future<void> _showChallengeCompletedDialogOnce(Challenge challenge) async {
+    print('=== DEBUG: _showChallengeCompletedDialogOnce() - Verificando si mostrar diálogo para: ${challenge.title} ===');
+    
+    try {
+      // Obtener el ID del usuario actual
+      final localUserStorage = LocalUserStorageService();
+      await localUserStorage.init();
+      final currentUserId = await localUserStorage.getUserId();
+      
+      if (currentUserId == null) {
+        print('=== DEBUG: No se pudo obtener el UID del usuario, no se mostrará diálogo ===');
+        return;
+      }
+      
+      // Verificar si ya se mostró esta notificación
+      final alreadyShown = await _wasNotificationAlreadyShown(challenge.id, currentUserId);
+      
+      if (alreadyShown) {
+        print('=== DEBUG: Diálogo para desafío ${challenge.title} ya fue mostrado antes, omitiendo ===');
+        return;
+      }
+      
+      print('=== DEBUG: Mostrando diálogo por primera vez para desafío: ${challenge.title} ===');
+      
+      // Mostrar el diálogo
+      _showChallengeCompletedDialog(challenge);
+      
+      // Marcar como mostrado
+      await _markNotificationAsShown(challenge.id, currentUserId);
+      
+    } catch (e) {
+      print('=== ERROR: Error en _showChallengeCompletedDialogOnce: $e ===');
+      // En caso de error, mostrar el diálogo por seguridad (mejor mostrar de más que de menos)
+      _showChallengeCompletedDialog(challenge);
+    }
+  }  /// Verifica si algún desafío ha sido completado y otorga puntos B-points
   /// Si [justCreatedReport] es true, indica que se acaba de crear un nuevo reporte
   Future<void> _checkAndAwardChallenges({bool justCreatedReport = false}) async {
     if (_challengeService == null) return;
@@ -159,8 +220,8 @@ class _MarkerDetailCardState extends State<MarkerDetailCard> {
       
       if (completedChallenges.isNotEmpty) {
         for (final challenge in completedChallenges) {
-          // Mostrar notificación de desafío completado
-          _showChallengeCompletedDialog(challenge);
+          // Mostrar notificación de desafío completado SOLO UNA VEZ
+          await _showChallengeCompletedDialogOnce(challenge);
         }
       }
     } catch (e) {
