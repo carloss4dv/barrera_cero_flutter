@@ -305,13 +305,12 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
+            const SizedBox(width: 8),            Text(
               label,
               style: TextStyle(
                 color: isSelected ? color : Colors.grey.shade700,
                 fontWeight: FontWeight.w500,
-                fontSize: 14,
+                fontSize: 16,
               ),
             ),
           ],
@@ -341,14 +340,13 @@ class _AccessibilityFilterState extends State<AccessibilityFilter> {
                   color: accentColor,
                   size: 20,
                 ),
-              ),
-              const SizedBox(width: 8),
+              ),              const SizedBox(width: 8),
               Text(
                 displayName,
                 style: TextStyle(
                   color: accentColor,
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: 12,
                 ),
               ),
             ],
